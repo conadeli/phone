@@ -1,0 +1,38 @@
+[
+  {
+    "id": "p_demo_1",
+    "carrierType": "알뜰폰",
+    "priceRegular": 22000,
+    "priceDiscount": 18900,
+    "competitorPrice": 22000,
+    "callType": "basic",
+    "callPaidMin": 60,
+    "callMin": 0,
+    "smsType": "basic",
+    "smsCondition": "SMS 무제한, MMS 월 100건",
+    "dataGB": 15,
+    "throttleVal": 1,
+    "throttleUnit": "Mbps",
+    "after": "speed",
+    "dataDesc": "15GB + 1Mbps",
+    "memo": "대표번호/유선 통화가 있으면 유료통화 가능(분)이 중요"
+  },
+  {
+    "id": "p_demo_2",
+    "carrierType": "알뜰폰",
+    "priceRegular": 17000,
+    "priceDiscount": 13900,
+    "competitorPrice": 17000,
+    "callType": "direct",
+    "callPaidMin": 0,
+    "callMin": 200,
+    "smsType": "unlimited",
+    "smsCondition": "",
+    "dataGB": 6,
+    "throttleVal": 400,
+    "throttleUnit": "Kbps",
+    "after": "speed",
+    "dataDesc": "6GB + 400Kbps",
+    "memo": "통화 직접입력 예시"
+  }
+]
