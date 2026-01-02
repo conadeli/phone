@@ -374,16 +374,30 @@
       .inline3{grid-template-columns:1fr 1fr}
     }
 
-    /* 메인 이미지 영역 */
-    .heroInner{padding:0;}
-    .heroImg,
-    .heroImgPreview{
-      display:block;
-      width:100%;
-      border-radius:calc(var(--r20) - 4px);
-      object-fit:cover;
-    }
-    .heroImgPreview{max-height:200px;}
+  /* 메인 이미지 영역 */
+.heroInner{
+  padding:0;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: calc(var(--r20) - 4px);
+}
+
+.heroImg{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.heroImgPreview{
+  display:block;
+  width:100%;
+  max-height:200px;
+  object-fit:cover;
+  border-radius:calc(var(--r20) - 4px);
+}
   </style>
 </head>
 <body>
@@ -1144,14 +1158,17 @@
   }
 
   function start(){
-    $("stepIntro").classList.add("hidden");
-    $("stepQuiz").classList.remove("hidden");
-    $("stepResult").classList.add("hidden");
-    step=0; answers={};
-    LAST_RESULT = null;
-    renderQ();
-    window.scrollTo({top:0,behavior:"smooth"});
-  }
+  document.getElementById("heroCard").classList.add("hidden"); // ✅ 추가
+
+  $("stepIntro").classList.add("hidden");
+  $("stepQuiz").classList.remove("hidden");
+  $("stepResult").classList.add("hidden");
+
+  step=0; answers={};
+  LAST_RESULT = null;
+  renderQ();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
   function restartTest(){
     $("stepResult").classList.add("hidden");
     $("stepIntro").classList.remove("hidden");
