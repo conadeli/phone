@@ -1,0 +1,2262 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>요금제 선택 체크</title>
+  <meta name="theme-color" content="#FFFFFF" />
+  <style>
+    :root{
+      --bg:#ffffff; --bg2:#f6f8fc; --card:#ffffff;
+      --stroke:#e6eaf2; --stroke2:#d7deea;
+      --text:#0e1424; --muted:#5b677a;
+      --blue:#2f6bff; --blue2:#1b56f4;
+      --green:#12b76a; --amber:#f4b400; --orange:#f97316;
+      --red:#ef4444; --red2:#dc2626;
+      --shadow: 0 10px 28px rgba(16,24,40,.08);
+      --shadow2: 0 16px 40px rgba(16,24,40,.12);
+      --r20:20px;
+
+      /* rank pastel/neo */
+      --r1-bg: rgba(255, 251, 143, .55);
+      --r1-st: rgba(255, 214, 10, .80);
+      --r1-glow: 0 18px 60px rgba(255, 214, 10, .32);
+
+      --r2-bg: rgba(163, 255, 209, .45);
+      --r2-st: rgba(18, 183, 106, .55);
+      --r2-glow: 0 16px 52px rgba(18, 183, 106, .22);
+
+      --r3-bg: rgba(179, 212, 255, .45);
+      --r3-st: rgba(47, 107, 255, .55);
+      --r3-glow: 0 16px 52px rgba(47, 107, 255, .22);
+
+      --r4-bg: rgba(255, 196, 220, .38);
+      --r4-st: rgba(239, 68, 68, .45);
+      --r4-glow: 0 14px 44px rgba(239, 68, 68, .18);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Helvetica, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(47,107,255,.08), transparent 60%),
+        radial-gradient(900px 520px at 90% 0%, rgba(18,183,106,.08), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    }
+    .top{
+      position:sticky; top:0; z-index:20;
+      padding: env(safe-area-inset-top) 0 0 0;
+      background: rgba(255,255,255,.88);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--stroke);
+    }
+    .topin{max-width:920px;margin:0 auto;padding:12px 14px;}
+    @media (min-width:520px){ .topin{padding:14px 18px;} }
+    .container{max-width:920px;margin:0 auto;padding:14px 14px 92px;}
+    @media (min-width:520px){ .container{padding:18px 18px 104px;} }
+    .brandRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+    .h1{margin:0;font-size:18px;font-weight:950;letter-spacing:-.3px;}
+    .sub{margin:3px 0 0;font-size:12px;color:var(--muted);line-height:1.45;}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--stroke);
+      border-radius:var(--r20);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      margin-top:14px;
+    }
+    .inner{padding:16px;}
+    @media (min-width:520px){ .inner{padding:18px;} }
+    .divider{height:1px;background:var(--stroke);margin:14px 0;}
+    .title{margin:0 0 8px;font-size:16px;font-weight:950;letter-spacing:-.2px;}
+    .p{margin:0;font-size:13px;color:var(--muted);line-height:1.7;}
+    .tiny{margin:8px 0 0;font-size:12px;color:rgba(14,20,36,.60);line-height:1.6;}
+
+    .qTitle{margin:0 0 6px;font-size:15px;font-weight:950;letter-spacing:-.2px;}
+    .qHelp{margin:0 0 12px;font-size:13px;color:var(--muted);line-height:1.65;}
+    .options{display:grid;gap:10px;}
+
+    .optBtn{
+      width:100%;
+      text-align:left;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      padding:14px 14px;
+      box-shadow: 0 8px 18px rgba(16,24,40,.05);
+      display:flex;gap:12px;align-items:flex-start;
+      cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .optBtn:hover{border-color:var(--stroke2); box-shadow: 0 12px 26px rgba(16,24,40,.08); transform: translateY(-1px);}
+    .optBtn:active{transform: scale(.995);}
+    .dot{width:18px;height:18px;border-radius:999px;border:2px solid var(--stroke2);margin-top:2px;flex:0 0 auto;background:#fff;position:relative;}
+    .optText{flex:1;font-size:14px;font-weight:850;line-height:1.35;}
+
+    .sel.blue{border-color:rgba(47,107,255,.55); background:rgba(47,107,255,.06); box-shadow:0 0 0 3px rgba(47,107,255,.12) inset, 0 14px 32px rgba(47,107,255,.10);}
+    .sel.blue .dot{border-color:rgba(47,107,255,.8); background:rgba(47,107,255,.10);}
+    .sel.blue .dot:after{content:"";position:absolute;inset:4px;border-radius:999px;background:rgba(47,107,255,.95);}
+    .sel.green{border-color:rgba(18,183,106,.55); background:rgba(18,183,106,.06); box-shadow:0 0 0 3px rgba(18,183,106,.12) inset, 0 14px 32px rgba(18,183,106,.10);}
+    .sel.green .dot{border-color:rgba(18,183,106,.8); background:rgba(18,183,106,.10);}
+    .sel.green .dot:after{content:"";position:absolute;inset:4px;border-radius:999px;background:rgba(18,183,106,.95);}
+    .sel.amber{border-color:rgba(244,180,0,.55); background:rgba(244,180,0,.07); box-shadow:0 0 0 3px rgba(244,180,0,.12) inset, 0 14px 32px rgba(244,180,0,.10);}
+    .sel.amber .dot{border-color:rgba(244,180,0,.85); background:rgba(244,180,0,.12);}
+    .sel.amber .dot:after{content:"";position:absolute;inset:4px;border-radius:999px;background:rgba(244,180,0,.95);}
+    .sel.red{border-color:rgba(239,68,68,.55); background:rgba(239,68,68,.06); box-shadow:0 0 0 3px rgba(239,68,68,.12) inset, 0 14px 32px rgba(239,68,68,.10);}
+    .sel.red .dot{border-color:rgba(239,68,68,.85); background:rgba(239,68,68,.10);}
+    .sel.red .dot:after{content:"";position:absolute;inset:4px;border-radius:999px;background:rgba(239,68,68,.95);}
+
+    .nav{display:flex;gap:10px;margin-top:14px;}
+    .btn{
+      flex:1;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:#fff;
+      padding:12px 14px;
+      font-weight:950;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .btn:hover{border-color:var(--stroke2); box-shadow: 0 14px 30px rgba(16,24,40,.10); transform: translateY(-1px);}
+    .btn:active{transform: scale(.995);}
+    .btn.primary{
+      background: linear-gradient(180deg, var(--blue), var(--blue2));
+      color:#fff;border-color:rgba(47,107,255,.45);
+      box-shadow: 0 18px 40px rgba(47,107,255,.18);
+    }
+    .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+    .resultTitle{margin:0 0 6px;font-size:18px;font-weight:1000;letter-spacing:-.25px;}
+    .resultSummary{white-space:pre-line;margin:0;font-size:13px;color:var(--muted);line-height:1.8;}
+    .resultSummary b{color:var(--text)}
+    .section{margin-top:14px;}
+    .sectionTitle{margin:0 0 10px;font-size:14px;font-weight:950;letter-spacing:-.15px;}
+
+    .badges{display:flex;flex-wrap:wrap;gap:8px;}
+    .badge{padding:9px 10px;border-radius:999px;border:1px solid var(--stroke);background:#fff;font-size:12px;color:var(--muted);box-shadow: 0 8px 18px rgba(16,24,40,.05);}
+    .badge.bad{border-color:rgba(239,68,68,.22);background:rgba(239,68,68,.06);color:#8e1b1b;}
+    .badge.good{border-color:rgba(18,183,106,.22);background:rgba(18,183,106,.06);color:#05603a;}
+    .badge.hot{border-color:rgba(255,214,10,.55);background:rgba(255,251,143,.55);color:#5a4a00;}
+    .badge.rank{font-weight:1000; letter-spacing:-.1px;}
+
+    .plans{display:grid;gap:12px;}
+    @media (min-width:720px){.plans{grid-template-columns:repeat(2,1fr)}}
+    .plan{
+      border:1px solid var(--stroke);
+      border-radius:22px;
+      background:linear-gradient(180deg,#fff,#fcfdff);
+      box-shadow:var(--shadow);
+      padding:14px;
+      position:relative;
+      overflow:hidden;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+    }
+    .plan:hover{transform: translateY(-2px); box-shadow: 0 22px 60px rgba(16,24,40,.14);}
+    .planTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+    .plan h4{margin:0 0 8px;font-size:14px;font-weight:1000;line-height:1.25;}
+    .plan p{margin:0;font-size:12px;color:var(--muted);line-height:1.6;}
+    .plan .mini{margin-top:10px;font-size:12px;color:rgba(14,20,36,.72);line-height:1.55}
+
+    .priceNow{font-weight:1000}
+    .priceWas{font-size:12px;color: rgba(14,20,36,.55);text-decoration: line-through;margin-left:6px;white-space:nowrap;}
+    .saveText{display:inline-block;margin-top:8px;font-size:12px;font-weight:1000;color:#05603a;background:rgba(18,183,106,.10);border:1px solid rgba(18,183,106,.25);border-radius:999px;padding:7px 10px;}
+    .savePill{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;border:1px solid rgba(18,183,106,.25);background:rgba(18,183,106,.10);color:#05603a;font-size:12px;font-weight:1000;white-space:nowrap;}
+
+    /* Rank highlight */
+    .plan.rank1{
+      border-color: var(--r1-st);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), var(--r1-bg));
+      box-shadow: var(--r1-glow);
+    }
+    .plan.rank2{
+      border-color: var(--r2-st);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), var(--r2-bg));
+      box-shadow: var(--r2-glow);
+    }
+    .plan.rank3{
+      border-color: var(--r3-st);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), var(--r3-bg));
+      box-shadow: var(--r3-glow);
+    }
+    .plan.rank4{
+      border-color: var(--r4-st);
+      background: linear-gradient(180deg, rgba(255,255,255,.92), var(--r4-bg));
+      box-shadow: var(--r4-glow);
+    }
+
+    /* ✅ 리본이 요금을 가리던 문제 해결:
+       - 우측 상단으로 이동
+       - planTop에 상단 여백 확보 (겹침 방지) */
+    .rankRibbon{
+      position:absolute; top:12px; right:12px; left:auto;
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:1100;
+      border:1px solid rgba(14,20,36,.12);
+      background: rgba(255,255,255,.90);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 22px rgba(16,24,40,.10);
+      max-width: 66%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events:none;
+    }
+    .planTop{ margin-top:34px; } /* 리본 공간 확보 */
+
+    .rankReason{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px solid rgba(14,20,36,.10);
+      background: rgba(255,255,255,.75);
+      color: rgba(14,20,36,.78);
+      font-size:12px;
+      line-height:1.55;
+      font-weight:850;
+    }
+    .rankReason b{color:var(--text)}
+
+    .hidden{display:none !important}
+
+    /* admin */
+    .adminGrid{display:grid;gap:12px;}
+    @media (min-width:920px){.adminGrid{grid-template-columns: 1fr 1fr; align-items:start;}}
+    .formGrid{display:grid;gap:10px;}
+    @media (min-width:520px){.formGrid{grid-template-columns:1fr 1fr}}
+    label{font-size:12px;color:var(--muted);font-weight:850}
+    input, select, textarea{
+      width:100%;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      padding:12px 12px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+      box-shadow: 0 8px 18px rgba(16,24,40,.04);
+    }
+    input:focus, select:focus, textarea:focus{border-color: rgba(47,107,255,.45); box-shadow: 0 0 0 3px rgba(47,107,255,.10)}
+    textarea{min-height:92px; resize:vertical;}
+
+    .row2{display:flex;gap:10px;flex-wrap:wrap;}
+    .smallBtn{
+      border:1px solid var(--stroke);
+      background:#fff;
+      border-radius:14px;
+      padding:10px 12px;
+      font-weight:950;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+    }
+    .smallBtn.primary{suggested: none;}
+    .smallBtn.primary{background:linear-gradient(180deg,var(--blue),var(--blue2)); color:#fff;border-color:rgba(47,107,255,.45)}
+    .smallBtn.danger{background:linear-gradient(180deg,var(--red),var(--red2)); color:#fff;border-color:rgba(239,68,68,.45)}
+    .smallBtn.good{background:linear-gradient(180deg,var(--green),var(--green)); color:#fff;border-color:rgba(18,183,106,.45)}
+
+    .list{display:grid;gap:10px;}
+    .item{border:1px solid var(--stroke);border-radius:18px;background:#fff;box-shadow: var(--shadow);padding:12px;}
+    .itemTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+    .itemName{font-weight:1000}
+    .itemMeta{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.55}
+
+    /* footer access */
+    .footerAccess{
+      position:fixed; right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index:30; font-size:12px;
+      color: rgba(14,20,36,.55);
+      user-select:none;
+    }
+    @media (min-width:520px){
+      .footerAccess{right:18px; bottom: calc(16px + env(safe-area-inset-bottom));}
+    }
+    .footerAccess .link{
+      color: rgba(14,20,36,.55);
+      text-decoration:none;
+      border-bottom:none;
+      cursor:pointer;
+      margin-left:0;
+    }
+
+    /* minimal modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(15,23,42,.16);
+      backdrop-filter: blur(4px);
+      display:none; z-index:70;
+      padding: 16px;
+    }
+    .modal{
+      max-width: 420px;
+      margin: 22vh auto 0;
+      background:#fff;
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      box-shadow: var(--shadow2);
+      overflow:hidden;
+    }
+    .modalBody{padding:16px}
+    .modalRow{display:flex; gap:10px; align-items:center;}
+    .modalRow input{
+      flex:1;
+      font-size:16px;
+      letter-spacing:.5px;
+      padding:12px 12px;
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      box-shadow: 0 8px 18px rgba(16,24,40,.04);
+      outline:none;
+    }
+    .modalRow input:focus{border-color: rgba(47,107,255,.45); box-shadow: 0 0 0 3px rgba(47,107,255,.10)}
+    .modalBtns{display:flex; gap:10px; margin-top:12px;}
+    .modalBtn{
+      flex:1;
+      border:1px solid var(--stroke);
+      background:#fff;
+      border-radius:14px;
+      padding:12px 14px;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow: 0 10px 22px rgba(16,24,40,.06);
+    }
+    .modalBtn.primary{
+      background: linear-gradient(180deg, var(--blue), var(--blue2));
+      color:#fff;
+      border-color: rgba(47,107,255,.45);
+      box-shadow: 0 16px 30px rgba(47,107,255,.16);
+    }
+    .warnBox{
+      margin-top:12px;
+      border-radius:16px;
+      border:1px solid rgba(239,68,68,.22);
+      background: rgba(239,68,68,.06);
+      color:#8e1b1b;
+      padding:12px;
+      font-size:12px;
+      line-height:1.6;
+      font-weight:900;
+      display:none;
+    }
+    .warnBox strong{display:block; font-size:13px; margin-bottom:6px;}
+
+    .toast{
+      position:fixed;left:50%;transform:translateX(-50%);
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      background: rgba(17,24,39,.92);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.14);
+      padding:10px 12px;
+      border-radius: 14px;
+      font-size:13px;
+      display:none;
+      max-width: calc(100% - 28px);
+      box-shadow: 0 16px 44px rgba(0,0,0,.22);
+      z-index:80;
+    }
+    .lock{position:fixed; inset:0; z-index:999; background:#fff; display:none;}
+
+    /* ✅ 관리자 입력 정렬 */
+    .inline2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      align-items:end;
+    }
+    .inline3{
+      display:grid;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      gap:10px;
+      align-items:end;
+    }
+    @media (max-width:520px){
+      .inline3{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <div class="topin">
+    <div class="brandRow">
+      <div>
+        <div class="h1">요금제 선택 체크</div>
+        <div class="sub">요금제를 고르기 전에, 이 선택이 “안전한지” 먼저 확인합니다.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- USER PAGE -->
+  <section id="userPage">
+    <div class="card" id="stepIntro">
+      <div class="inner">
+        <div class="title">시작하기</div>
+        <p class="p">
+          이 페이지는 요금제 판매/최저가 비교가 아닙니다.<br>
+          알뜰폰 선택이 <b>불편하지 않은지</b>만 확인합니다.
+        </p>
+        <div class="divider"></div>
+        <button class="btn primary" type="button" onclick="start()">질문 시작</button>
+        <div class="tiny">※ 요금은 조건/시점에 따라 달라질 수 있습니다.</div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="stepQuiz">
+      <div class="inner">
+        <div class="badge" style="display:inline-block" id="stepPill">1 / 13</div>
+        <div style="height:10px"></div>
+
+        <div class="qTitle" id="qTitle"></div>
+        <div class="qHelp" id="qHelp"></div>
+
+        <div class="options" id="qOptions"></div>
+
+        <div class="nav">
+          <button class="btn" type="button" onclick="prev()">이전</button>
+          <button class="btn primary" type="button" id="nextBtn" onclick="next()" disabled>다음</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card hidden" id="stepResult">
+      <div class="inner">
+        <div class="resultTitle">판단 결과</div>
+        <p class="resultSummary" id="resultSummary"></p>
+
+        <div class="section">
+          <div class="sectionTitle">이 유형에서 자주 문제가 생기는 구조</div>
+          <div class="badges" id="avoidBox"></div>
+        </div>
+
+        <div class="section">
+          <div class="sectionTitle">이 유형에서 자주선택된 구성</div>
+          <div class="plans" id="planBox"></div>
+          <div class="tiny">※ “추천/정답”이 아니라 입력된 요금제 중 조건 적합도를 계산한 참고 결과입니다. (1~4순위)</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="options" style="gap:10px;">
+          <button class="btn primary" type="button" onclick="kakaoConsult()">바로 카톡상담하기</button>
+          <button class="btn" type="button" onclick="reserve()">상담예약하기</button>
+        </div>
+
+        <div class="options" style="gap:10px;margin-top:10px;">
+          <button class="btn" type="button" onclick="shareResultToKakao()">내 카톡으로 결과보내기</button>
+          <button class="btn" type="button" onclick="restartTest()">다시 테스트하기</button>
+        </div>
+
+        <div class="tiny" style="margin-top:12px;" id="contactHint"></div>
+        <div class="tiny" style="margin-top:6px;">
+          ※ 안내: 요금은 시점·조건·제공 방식에 따라 달라질 수 있으며, 각 통신사의 공식 홈페이지에 안내된 유사 조건 요금제보다 소폭 높을 수 있습니다.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMIN PAGE -->
+  <section id="adminPage" class="hidden">
+
+    <div class="card">
+      <div class="inner">
+        <div class="title">관리자</div>
+        <p class="p">
+          ✅ 요금제는 브라우저에 저장됩니다(localStorage).<br>
+          ✅ 엑셀(.xlsx)로 한 번에 업데이트/수정 가능합니다. (id가 같으면 덮어쓰기)<br>
+          ✅ 숫자칸은 <b>15GB / 400Kbps / 18,900원 / 30분</b>처럼 단위가 붙어도 자동 인식합니다.
+        </p>
+        <div class="divider"></div>
+        <div class="row2">
+          <button class="smallBtn primary" type="button" onclick="goHome()">홈페이지 바로가기</button>
+          <button class="smallBtn primary" type="button" onclick="downloadTemplate()">샘플 엑셀 다운로드(.xlsx)</button>
+          <button class="smallBtn primary" type="button" onclick="triggerExcel()">엑셀 업로드(.xlsx)</button>
+          <button class="smallBtn" type="button" onclick="exportExcel()">엑셀로 내보내기</button>
+          <button class="smallBtn" type="button" onclick="seedDemo()">데모 데이터 넣기</button>
+        </div>
+        <input id="excelInput" type="file" accept=".xlsx" class="hidden" />
+        <div class="tiny" id="excelHint">* 템플릿 컬럼명을 유지하세요. “id(선택)”이 같으면 해당 요금제가 수정됩니다.</div>
+      </div>
+    </div>
+
+    <!-- ✅ 연락/공유 설정 추가 -->
+    <div class="card">
+      <div class="inner">
+        <div class="title">연락/공유 설정</div>
+        <div class="p">결과 공유(카톡) 메시지에 들어갈 <b>상담 링크 / 문의전화 / 안내메모</b>를 설정합니다. (이 브라우저에 저장됨)</div>
+        <div style="height:10px"></div>
+
+        <div class="formGrid">
+          <div>
+            <label>카톡 상담 링크</label>
+            <input id="sKakao" placeholder="예) https://open.kakao.com/o/..." autocomplete="off" />
+          </div>
+          <div>
+            <label>상담예약 링크</label>
+            <input id="sReserve" placeholder="예) https://forms.gle/..." autocomplete="off" />
+          </div>
+          <div>
+            <label>문의전화 번호</label>
+            <input id="sPhone" placeholder="예) 010-1234-5678" autocomplete="off" />
+          </div>
+          <div>
+            <label>안내 메모(공유 메시지에 함께)</label>
+            <input id="sMemo" placeholder="예) 상담 가능시간 / 주의사항 한줄 등" autocomplete="off" />
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="row2">
+          <button class="smallBtn primary" type="button" onclick="saveSettings()">설정 저장</button>
+          <button class="smallBtn" type="button" onclick="resetSettings()">설정 초기화</button>
+        </div>
+
+        <div class="tiny" id="settingsHint"></div>
+      </div>
+    </div>
+
+    <!-- 관리자 코드 변경 -->
+    <div class="card">
+      <div class="inner">
+        <div class="title">관리자 코드 변경</div>
+        <div class="p">현재 코드로 인증 후 새 코드로 변경합니다. (이 브라우저에 저장됨)</div>
+        <div style="height:10px"></div>
+        <div class="formGrid">
+          <div>
+            <label>현재 코드</label>
+            <input id="codeOld" placeholder="현재 코드 입력" autocomplete="off" />
+          </div>
+          <div>
+            <label>새 코드</label>
+            <input id="codeNew" placeholder="새 코드 입력" autocomplete="off" />
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="row2">
+          <button class="smallBtn primary" type="button" onclick="changeAdminCode()">코드 변경</button>
+          <button class="smallBtn" type="button" onclick="resetAdminCode()">초기 코드로 되돌리기</button>
+        </div>
+        <div class="tiny" id="codeHint"></div>
+      </div>
+    </div>
+
+    <div class="adminGrid">
+      <div class="card">
+        <div class="inner">
+          <div class="title" id="formTitle">요금제 추가</div>
+
+          <div class="formGrid">
+
+            <div>
+              <label>통신사 유형(고정)</label>
+              <input id="fCarrierType" value="알뜰폰" disabled />
+            </div>
+
+            <div>
+              <label>정가(원)</label>
+              <input id="fPriceRegular" placeholder="예) 22000 또는 22,000원" />
+            </div>
+
+            <div>
+              <label>할인가(원) *</label>
+              <input id="fPriceDiscount" placeholder="예) 18900 또는 18,900원" />
+            </div>
+
+            <div>
+              <label>타사 유사요금(원)</label>
+              <input id="fCompetitorPrice" placeholder="예) 22000 또는 22,000원" />
+            </div>
+
+            <div class="inline3">
+              <div>
+                <label>음성통화시간</label>
+                <select id="fCallType" onchange="toggleCallInputs()">
+                  <option value="unlimited">무제한</option>
+                  <option value="basic">기본제공</option>
+                  <option value="direct">직접입력</option>
+                </select>
+              </div>
+              <div>
+                <label>유료통화 가능(분)</label>
+                <input id="fCallPaidMin" placeholder="예) 30 또는 30분" />
+              </div>
+              <div>
+                <label>직접입력 통화(분)</label>
+                <input id="fCallMin" placeholder="예) 200 또는 200분" />
+              </div>
+            </div>
+            <div class="tiny" style="margin-top:-4px;">
+              · 기본제공: 휴대폰 무료통화(무제한)로 보고, 지역(02/031)/070/유료 등은 “유료통화 가능(분)”을 입력합니다.
+            </div>
+
+            <div class="inline2">
+              <div>
+                <label>문자</label>
+                <select id="fSmsType" onchange="toggleSmsInputs()">
+                  <option value="unlimited">무제한</option>
+                  <option value="basic">기본제공(조건부무제한)</option>
+                </select>
+              </div>
+              <div>
+                <label>문자 조건(직접 입력)</label>
+                <input id="fSmsCondition" placeholder="예) SMS 무제한, MMS 월 100건" />
+              </div>
+            </div>
+
+            <div>
+              <label>데이터(GB) *</label>
+              <input id="fDataGB" placeholder="예) 15 또는 15GB 또는 15기가" />
+            </div>
+
+            <div class="inline2">
+              <div>
+                <label>데이터 소진 후 속도값</label>
+                <input id="fThrottleVal" placeholder="예) 1Mbps 또는 400Kbps 또는 1" />
+              </div>
+              <div>
+                <label>속도 단위</label>
+                <select id="fThrottleUnit">
+                  <option value="Mbps">Mbps</option>
+                  <option value="Kbps">Kbps</option>
+                </select>
+              </div>
+            </div>
+            <div class="tiny" style="margin-top:-4px;">
+              · 속도값 칸에 <b>1Mbps / 400Kbps</b>처럼 단위를 같이 적어도 자동으로 단위를 맞춥니다.
+            </div>
+
+            <div>
+              <label>데이터 소진 후 구조</label>
+              <select id="fAfter">
+                <option value="speed">속도제어(추가요금 없음)</option>
+                <option value="cut">차단</option>
+                <option value="metered">종량과금(초과요금 가능)</option>
+              </select>
+            </div>
+
+            <div>
+              <label>표시용 설명(옵션)</label>
+              <input id="fDataDesc" placeholder="예) 10GB + 1Mbps / 3GB + 400Kbps" />
+            </div>
+
+            <div>
+              <label>메모(옵션)</label>
+              <textarea id="fMemo" placeholder="불편사례/주의사항/한줄설명 등"></textarea>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row2">
+            <button class="smallBtn good" type="button" onclick="savePlan()">저장</button>
+            <button class="smallBtn" type="button" onclick="resetForm()">초기화</button>
+            <button class="smallBtn danger hidden" id="deleteBtn" type="button" onclick="deletePlan()">삭제</button>
+          </div>
+
+          <div class="tiny" id="calcHint"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="inner">
+          <div class="title">등록된 요금제</div>
+          <div class="list" id="planList"></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<div class="footerAccess">
+  © 2026 Alttlehan Kim Yuseon. All rights
+  <span class="link" role="button" tabindex="0"
+        onclick="openGate()"
+        onkeydown="if(event.key==='Enter')openGate();">
+    reserved
+  </span>.
+</div>
+
+<div id="gateBack" class="modalBack" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modalBody">
+      <div class="modalRow">
+        <input id="gateInput" placeholder=" " autocomplete="off" />
+      </div>
+      <div class="modalBtns">
+        <button class="modalBtn" type="button" onclick="closeGate()">닫기</button>
+        <button class="modalBtn primary" type="button" onclick="checkGate()">확인</button>
+      </div>
+      <div id="warnBox" class="warnBox">
+        <strong>비정상 접근입니다.</strong>
+        추가로 시도하여 틀리면 비정상 접근 신고되어 법적조치가 될 수 있습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="lock" class="lock"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+  /***********************
+   * SETTINGS (ADMIN EDITABLE)
+   ***********************/
+  const SETTINGS_KEY = "planCheck_settings_v1";
+  const DEFAULT_SETTINGS = {
+    kakaoChatUrl: "https://open.kakao.com/o/XXXXXXXX",
+    reservationUrl: "https://forms.gle/XXXXXXXXXXXX",
+    phone: "",
+    memo: ""
+  };
+
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if(!raw) return {...DEFAULT_SETTINGS};
+      const obj = JSON.parse(raw);
+      return {...DEFAULT_SETTINGS, ...(obj||{})};
+    }catch(e){
+      return {...DEFAULT_SETTINGS};
+    }
+  }
+  function writeSettings(s){
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+  }
+  let SETTINGS = loadSettings();
+
+  function refreshSettingsUI(){
+    const s = SETTINGS;
+    const $id = (x)=>document.getElementById(x);
+    if($id("sKakao")) $id("sKakao").value = s.kakaoChatUrl || "";
+    if($id("sReserve")) $id("sReserve").value = s.reservationUrl || "";
+    if($id("sPhone")) $id("sPhone").value = s.phone || "";
+    if($id("sMemo")) $id("sMemo").value = s.memo || "";
+    if($id("settingsHint")) $id("settingsHint").textContent =
+      `현재 설정: 카톡링크 ${s.kakaoChatUrl ? "등록됨" : "미등록"} · 문의전화 ${s.phone ? "등록됨" : "미등록"} · 안내메모 ${s.memo ? "등록됨" : "미등록"}`;
+    updateContactHint();
+  }
+
+  function saveSettings(){
+    const s = {
+      kakaoChatUrl: (document.getElementById("sKakao").value || "").trim(),
+      reservationUrl: (document.getElementById("sReserve").value || "").trim(),
+      phone: (document.getElementById("sPhone").value || "").trim(),
+      memo: (document.getElementById("sMemo").value || "").trim(),
+    };
+    writeSettings(s);
+    SETTINGS = loadSettings();
+    refreshSettingsUI();
+    toast("설정 저장 완료");
+  }
+  function resetSettings(){
+    localStorage.removeItem(SETTINGS_KEY);
+    SETTINGS = loadSettings();
+    refreshSettingsUI();
+    toast("설정 초기화");
+  }
+
+  function updateContactHint(){
+    const el = document.getElementById("contactHint");
+    if(!el) return;
+    const parts = [];
+    if(SETTINGS.phone) parts.push(`문의전화: <b>${escapeHtml(SETTINGS.phone)}</b>`);
+    if(SETTINGS.memo) parts.push(`안내: ${escapeHtml(SETTINGS.memo)}`);
+    if(parts.length===0){
+      el.innerHTML = "※ 관리자에서 ‘연락/공유 설정’을 등록하면 결과 공유 메시지에 상담 정보가 포함됩니다.";
+      return;
+    }
+    el.innerHTML = parts.join(" · ");
+  }
+
+  /***********************
+   * ADMIN CODE
+   ***********************/
+  const ADMIN_DEFAULT_CODE = "4861841**";
+  const ADMIN_CODE_KEY = "planCheck_admin_code_v1";
+  function getAdminCode(){ return localStorage.getItem(ADMIN_CODE_KEY) || ADMIN_DEFAULT_CODE; }
+  function setAdminCode(code){ localStorage.setItem(ADMIN_CODE_KEY, code); }
+
+  /***********************
+   * Gate (SESSION ONLY)
+   ***********************/
+  const ATTEMPT_KEY = "planCheck_admin_attempts_v1";
+  const LOCK_KEY = "planCheck_locked_v1";
+  function getAttempts(){ return Number(sessionStorage.getItem(ATTEMPT_KEY) || "0"); }
+  function setAttempts(n){ sessionStorage.setItem(ATTEMPT_KEY, String(n)); }
+  function isLocked(){ return sessionStorage.getItem(LOCK_KEY) === "1"; }
+
+  function openGate(){
+    if(isLocked()) return;
+    const back = document.getElementById("gateBack");
+    back.style.display = "block";
+    back.setAttribute("aria-hidden","false");
+    document.getElementById("warnBox").style.display = (getAttempts() >= 3) ? "block" : "none";
+    setTimeout(()=>document.getElementById("gateInput").focus(), 30);
+  }
+  function closeGate(){
+    const back = document.getElementById("gateBack");
+    back.style.display = "none";
+    back.setAttribute("aria-hidden","true");
+    document.getElementById("gateInput").value = "";
+  }
+  function checkGate(){
+    if(isLocked()) return;
+    const v = (document.getElementById("gateInput").value || "").trim();
+    const code = getAdminCode();
+
+    if(v === code){
+      setAttempts(0);
+      closeGate();
+      location.hash = "#admin";
+      renderRoute();
+      return;
+    }
+    let a = getAttempts() + 1;
+    setAttempts(a);
+    if(a >= 3) document.getElementById("warnBox").style.display = "block";
+    if(a >= 6){ lockDown(); return; }
+    document.getElementById("gateInput").value = "";
+    document.getElementById("gateInput").focus();
+  }
+  document.getElementById("gateBack").addEventListener("click",(e)=>{
+    if(e.target.id==="gateBack") closeGate();
+  });
+  function lockDown(){
+    sessionStorage.setItem(LOCK_KEY,"1");
+    document.getElementById("gateBack").style.display="none";
+    document.getElementById("lock").style.display="block";
+    try{ window.close(); }catch(e){}
+  }
+  if(isLocked()) document.getElementById("lock").style.display="block";
+
+  /***********************
+   * Admin code change
+   ***********************/
+  function changeAdminCode(){
+    const oldV = (document.getElementById("codeOld").value || "").trim();
+    const newV = (document.getElementById("codeNew").value || "").trim();
+    const cur = getAdminCode();
+
+    if(!oldV || !newV){ toast("현재 코드/새 코드를 입력하세요."); return; }
+    if(oldV !== cur){ toast("현재 코드가 올바르지 않습니다."); return; }
+    if(newV.length < 6){ toast("새 코드는 6자 이상 권장합니다."); return; }
+
+    setAdminCode(newV);
+    document.getElementById("codeOld").value = "";
+    document.getElementById("codeNew").value = "";
+    updateCodeHint();
+    toast("코드 변경 완료");
+  }
+  function resetAdminCode(){
+    localStorage.removeItem(ADMIN_CODE_KEY);
+    updateCodeHint();
+    toast("초기 코드로 되돌리기");
+  }
+  function updateCodeHint(){
+    const isDefault = (getAdminCode() === ADMIN_DEFAULT_CODE);
+    const el = document.getElementById("codeHint");
+    el.textContent = isDefault ? "현재 코드: 기본 코드(초기값) 사용 중" : "현재 코드: 사용자 지정 코드 사용 중";
+  }
+
+  /***********************
+   * Route
+   ***********************/
+  function renderRoute(){
+    const isAdmin = location.hash === "#admin";
+    document.getElementById("userPage").classList.toggle("hidden", isAdmin);
+    document.getElementById("adminPage").classList.toggle("hidden", !isAdmin);
+    if(isAdmin){
+      renderAdminList();
+      updateCalcHint();
+      updateCodeHint();
+      toggleCallInputs();
+      toggleSmsInputs();
+      refreshSettingsUI();
+      window.scrollTo({top:0,behavior:"smooth"});
+    }else{
+      updateContactHint();
+    }
+  }
+  window.addEventListener("hashchange", renderRoute);
+
+  function goHome(){
+    location.hash = "";
+    renderRoute();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  /***********************
+   * QUIZ
+   ***********************/
+  const quiz = [
+    { id:"user", title:"Q1. 실제로 사용할 사람은 누구인가요?", type:"single",
+      options:[
+        {key:"self",label:"본인이 사용",color:"blue"},
+        {key:"parent",label:"부모님/어르신",color:"green"},
+        {key:"kid",label:"아이/서브폰",color:"amber"},
+      ]
+    },
+    { id:"minData", title:"Q2. 데이터는 최소 어느 정도면 편한가요?", type:"single",
+      options:[
+        {key:"d1", label:"거의 안 써요(1GB 이하)", color:"green"},
+        {key:"d2", label:"조금 써요(2GB)", color:"blue"},
+        {key:"d7", label:"보통 써요(7GB)", color:"blue"},
+        {key:"d15",label:"자주 써요(15GB)", color:"amber"},
+        {key:"d30",label:"많이 써요(30GB)", color:"amber"},
+        {key:"d50",label:"매우 많이 써요(50GB+)", color:"red"},
+      ]
+    },
+    { id:"whereUse", title:"Q3. 데이터는 주로 어디에서 쓰나요?", type:"single",
+      options:[
+        {key:"almostNone", label:"거의 안 써요(집/와이파이 위주)", color:"green"},
+        {key:"outsideOften", label:"밖에서 자주 사용(이동/외출)", color:"amber"},
+        {key:"unknown", label:"잘 모르겠어요", color:"red"},
+      ]
+    },
+    { id:"navi", title:"Q4. 지도/내비 사용은 어떤가요?", type:"single",
+      options:[
+        {key:"often", label:"자주 써요", color:"amber"},
+        {key:"sometimes", label:"가끔 써요", color:"blue"},
+        {key:"rare", label:"거의 안 써요", color:"green"},
+        {key:"unknown", label:"잘 모르겠어요", color:"red"},
+      ]
+    },
+    { id:"minCall", title:"Q5. 통화는 어느 정도가 필요하신가요?", type:"single",
+      options:[
+        {key:"c0", label:"0분(거의 안 함)", color:"green"},
+        {key:"c100", label:"100분", color:"blue"},
+        {key:"c200", label:"200분", color:"blue"},
+        {key:"c400", label:"400분", color:"amber"},
+        {key:"unlimitedPref", label:"무제한 선호(대표번호/유선 포함)", color:"red"},
+      ]
+    },
+    { id:"publicCall", title:"Q6. 병원/관공서/대표번호/유선(02/031)/070 등에 전화하나요?", type:"single",
+      options:[
+        {key:"often", label:"자주", color:"red"},
+        {key:"sometimes", label:"가끔", color:"amber"},
+        {key:"rare", label:"거의 안 해요", color:"green"},
+        {key:"unknown", label:"잘 모르겠어요", color:"red"},
+      ]
+    },
+    { id:"minSms", title:"Q7. 문자는 어느 정도가 필요하신가요?", type:"single",
+      options:[
+        {key:"s50", label:"50건(인증 위주)", color:"green"},
+        {key:"s100", label:"100건", color:"blue"},
+        {key:"s200", label:"200건 이상", color:"amber"},
+        {key:"unlimitedPref", label:"무제한 선호", color:"red"},
+      ]
+    },
+    { id:"afterPref", title:"Q8. 데이터가 소진된 후, 데이터 관리를 어떻게 하길 원하나요?", type:"single",
+      options:[
+        {key:"useEvenIfCharged", label:"초과요금이 생기더라도 계속 사용", color:"amber"},
+        {key:"slowUnlimited", label:"비용 추가 없이 계속 사용(느린 속도)", color:"green"},
+        {key:"cut", label:"아예 차단(새로 갱신될 때까지)", color:"red"},
+        {key:"unknown", label:"잘 모르겠음", color:"red"},
+      ]
+    },
+    { id:"overageExp", title:"Q9. 데이터 초과로 요금이 늘어난 경험이 있나요?", type:"single",
+      options:[
+        {key:"yes", label:"있음", color:"red"},
+        {key:"no", label:"없음", color:"green"},
+        {key:"unknown", label:"기억 안 남", color:"red"},
+      ]
+    },
+    { id:"budget", title:"Q10. 원하는 요금대(최대 2개)", type:"multiMax2",
+      options:[
+        {key:"b1", label:"1만원 이하", color:"green"},
+        {key:"b2", label:"1~2만원", color:"blue"},
+        {key:"b3", label:"2~3만원", color:"amber"},
+        {key:"b4", label:"3~4만원", color:"amber"},
+        {key:"b5", label:"4만원 이상", color:"red"},
+      ]
+    },
+    { id:"prefCallType", title:"Q11. 원하는 통화 형식은?", type:"single",
+      options:[
+        {key:"unlimited", label:"무제한(조건없음)", color:"red"},
+        {key:"basic", label:"기본제공(모바일 무제한 + 유료통화 제한)", color:"amber"},
+        {key:"direct", label:"직접입력(분)", color:"blue"},
+      ]
+    },
+    { id:"prefSmsType", title:"Q12. 원하는 문자 형식은?", type:"single",
+      options:[
+        {key:"unlimited", label:"무제한", color:"blue"},
+        {key:"basic", label:"기본제공(조건부)", color:"amber"},
+      ]
+    },
+    { id:"endNotice", title:"Q13. 약정이 종료되기 직전 어떤 안내(관리)를 받는 게 좋나요?", type:"single",
+      options:[
+        {key:"sms", label:"알림문자", color:"blue"},
+        {key:"smsPlusCall", label:"알림문자 + 약정종료에 대한 명확한 안내 연락(광고 아님)", color:"amber"},
+        {key:"none", label:"둘 다 필요없음(본인이 알아서 처리)", color:"green"},
+      ]
+    },
+  ];
+
+  let step=0, answers={};
+  let LAST_RESULT = null; // 결과 공유용
+  const $ = (id)=>document.getElementById(id);
+
+  function toast(msg){
+    const t = $("toast");
+    t.textContent = msg || "";
+    t.style.display = "block";
+    clearTimeout(window.__t);
+    window.__t = setTimeout(()=>t.style.display="none", 1400);
+  }
+
+  function start(){
+    $("stepIntro").classList.add("hidden");
+    $("stepQuiz").classList.remove("hidden");
+    $("stepResult").classList.add("hidden");
+    step=0; answers={};
+    LAST_RESULT = null;
+    renderQ();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function restartTest(){
+    $("stepResult").classList.add("hidden");
+    $("stepIntro").classList.remove("hidden");
+    $("stepQuiz").classList.add("hidden");
+    step=0; answers={};
+    LAST_RESULT = null;
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  function prev(){ if(step<=0) return; step--; renderQ(); }
+  function next(){
+    if(!isAnswered(quiz[step])) return;
+    if(step<quiz.length-1){ step++; renderQ(); }
+    else{
+      buildResult();
+      $("stepQuiz").classList.add("hidden");
+      $("stepResult").classList.remove("hidden");
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+  }
+  function isAnswered(q){
+    const v = answers[q.id];
+    if(q.type==="single") return !!v;
+    if(q.type==="multiMax2") return Array.isArray(v) && v.length>0 && v.length<=2;
+    if(q.type==="multi") return Array.isArray(v)&&v.length>0;
+    return false;
+  }
+
+  function renderQ(){
+    const q = quiz[step];
+    $("stepPill").textContent = `${step+1} / ${quiz.length}`;
+    $("qTitle").textContent = q.title;
+    $("qHelp").textContent = q.help || "";
+
+    const box = $("qOptions");
+    box.innerHTML="";
+
+    if(q.type==="single"){
+      q.options.forEach(opt=>{
+        const selected = answers[q.id]===opt.key;
+        const b=document.createElement("button");
+        b.type="button";
+        b.className="optBtn"+(selected?(" sel "+opt.color):"");
+        b.innerHTML = `<span class="dot"></span><span class="optText">${escapeHtml(opt.label)}</span>`;
+        b.onclick=()=>{ answers[q.id]=opt.key; renderQ(); };
+        box.appendChild(b);
+      });
+    } else if(q.type==="multiMax2"){
+      const selected = new Set(answers[q.id] || []);
+      q.options.forEach(opt=>{
+        const isSel = selected.has(opt.key);
+        const b=document.createElement("button");
+        b.type="button";
+        b.className="optBtn"+(isSel?(" sel "+opt.color):"");
+        b.innerHTML = `<span class="dot"></span><span class="optText">${escapeHtml(opt.label)}</span>`;
+        b.onclick=()=>{
+          if(selected.has(opt.key)) selected.delete(opt.key);
+          else{
+            if(selected.size>=2){ toast("최대 2개까지 선택할 수 있어요."); return; }
+            selected.add(opt.key);
+          }
+          answers[q.id]=Array.from(selected);
+          renderQ();
+        };
+        box.appendChild(b);
+      });
+    }
+
+    $("nextBtn").disabled = !isAnswered(q);
+  }
+
+  /***********************
+   * 로직
+   ***********************/
+  function dataStepToGB(k){
+    if(k==="d1") return 1;
+    if(k==="d2") return 2;
+    if(k==="d7") return 7;
+    if(k==="d15") return 15;
+    if(k==="d30") return 30;
+    if(k==="d50") return 50;
+    return 7;
+  }
+  function callStepToMin(k){
+    if(k==="c0") return 0;
+    if(k==="c100") return 100;
+    if(k==="c200") return 200;
+    if(k==="c400") return 400;
+    if(k==="unlimitedPref") return 400;
+    return 200;
+  }
+  function smsStepToCount(k){
+    if(k==="s50") return 50;
+    if(k==="s100") return 100;
+    if(k==="s200") return 200;
+    if(k==="unlimitedPref") return 200;
+    return 100;
+  }
+  function inferBudgetRanges(){
+    const picked = answers.budget || [];
+    const ranges = [];
+    picked.forEach(k=>{
+      if(k==="b1") ranges.push([0, 10000]);
+      if(k==="b2") ranges.push([10000, 20000]);
+      if(k==="b3") ranges.push([20000, 30000]);
+      if(k==="b4") ranges.push([30000, 40000]);
+      if(k==="b5") ranges.push([40000, Infinity]);
+    });
+    return ranges;
+  }
+
+  function inferNeeds(){
+    // data base
+    let needDataGB = dataStepToGB(answers.minData);
+
+    // Q3: outsideOften => Q2 그대로(추가 없음), unknown => +2
+    if(answers.whereUse==="unknown") needDataGB += 2;
+
+    // Q4: 지도/내비는 "야외 사용" 성격이므로
+    // - Q3가 almostNone(집/와이파이 위주)일 때는 원래 가산(+2/+1/+0/+1) 그대로
+    // - Q3가 outsideOften일 때는 과도 점프 방지로 완화 적용
+    const where = answers.whereUse || "unknown";
+    const n = answers.navi || "unknown";
+
+    if(where === "outsideOften"){
+      // 완화 버전
+      if(n==="often") needDataGB += 1;
+      else if(n==="sometimes") needDataGB += 0;
+      else if(n==="unknown") needDataGB += 1;
+    }else{
+      // 기본(원래 가산)
+      if(n==="often") needDataGB += 2;
+      else if(n==="sometimes") needDataGB += 1;
+      else if(n==="unknown") needDataGB += 1;
+    }
+
+    // call
+    let needCallMin = callStepToMin(answers.minCall);
+    const preferUnlimitedCall = (answers.minCall==="unlimitedPref");
+
+    // sms
+    let needSms = smsStepToCount(answers.minSms);
+    const preferUnlimitedSms = (answers.minSms==="unlimitedPref");
+
+    // public call risk (대표/유선/070)
+    const publicCall = answers.publicCall || "unknown";
+
+    // protect: Q8 unknown or Q9 yes/unknown
+    const protect = (answers.afterPref==="unknown") || (answers.overageExp==="yes" || answers.overageExp==="unknown");
+
+    // Q8 new meaning
+    const wantsMeteredOk = (answers.afterPref==="useEvenIfCharged");
+    const wantsSlowUnlimited = (answers.afterPref==="slowUnlimited");
+    const wantsCut = (answers.afterPref==="cut");
+
+    // dislike flags used for safety scoring/avoid
+    const hateOverage = (!wantsMeteredOk) || protect; // 과금 허용을 고른 경우가 아니면 과금 싫음
+    const hateCut = (!wantsCut) || protect;           // 차단을 '원함'이 아니면 끊김 싫음
+    const okSlow = wantsSlowUnlimited;                // 느려져도 OK
+
+    const budgetRanges = inferBudgetRanges();
+
+    const pref = {
+      callType: answers.prefCallType || "unlimited",
+      smsType: answers.prefSmsType || "unlimited",
+      endNotice: answers.endNotice || "sms"
+    };
+
+    return {
+      needDataGB, needCallMin, needSms,
+      preferUnlimitedCall, preferUnlimitedSms,
+      publicCall,
+      protect, hateOverage, hateCut, okSlow,
+      wantsMeteredOk, wantsSlowUnlimited, wantsCut,
+      budgetRanges, pref
+    };
+  }
+
+  function endNoticeLabel(k){
+    if(k==="sms") return "알림문자";
+    if(k==="smsPlusCall") return "알림문자 + 약정종료 안내연락";
+    if(k==="none") return "필요없음(본인이 처리)";
+    return "-";
+  }
+
+  function buildResult(){
+    const needs = inferNeeds();
+
+    const lines = [];
+    lines.push(`<b>✔ 데이터 최소 기준: ${Math.round(needs.needDataGB)}GB 이상</b>`);
+    lines.push(`<b>✔ 통화 기준: ${needs.preferUnlimitedCall ? "무제한 선호" : (needs.needCallMin===0 ? "거의 없음" : needs.needCallMin+"분 수준")}</b>`);
+    lines.push(`<b>✔ 문자 기준: ${needs.preferUnlimitedSms ? "무제한 선호" : needs.needSms+"건 수준"}</b>`);
+    if(needs.publicCall==="often" || needs.publicCall==="sometimes"){
+      lines.push(`<b>✔ 대표번호/유선/070 통화가 있어 ‘기본제공’의 유료통화분이 중요</b>`);
+    }
+    if(needs.protect) lines.push(`<b>✔ 과금/불편 사고 방지가 중요(보호 모드)</b>`);
+    lines.push(`<b>✔ 약정 종료 안내 선호: ${endNoticeLabel(needs.pref.endNotice)}</b>`);
+
+    const summary = `당신은 다음 기준에 가깝습니다.\n\n${lines.join("\n")}\n\n아래는 입력된 요금제 중, 데이터/통화/문자/안전 요소를 세부 점수화해 뽑은 결과입니다.`;
+    $("resultSummary").innerHTML = summary.replaceAll("\n","<br>");
+
+    const avoid = [];
+    // Q8 기반: 과금 허용이 아니면 종량 피하기
+    if(needs.hateOverage) avoid.push("종량 과금(데이터 초과 시 요금 증가)");
+    // 차단을 '원함'이 아니면 차단 피하기(보호 모드면 더 강하게)
+    if(needs.hateCut) avoid.push("데이터 소진 시 완전 차단(연락/카톡 끊김)");
+    // 느린 무제한을 원하면, 속도제어 없는 구조/차단/종량이 불리
+    if(needs.okSlow) avoid.push("소진 후 속도제어가 없는 구성(차단/종량)");
+
+    if(needs.publicCall==="often") avoid.push("기본제공인데 유료통화 가능 시간이 너무 짧은 구성");
+
+    const avoidBox = $("avoidBox");
+    avoidBox.innerHTML="";
+    avoid.forEach(t=>{
+      const s=document.createElement("span");
+      s.className="badge bad";
+      s.textContent="피하기: "+t;
+      avoidBox.appendChild(s);
+    });
+
+    const plans = loadPlans().map(migrateLegacyPlan);
+    const picked = pickPlans(plans, needs, 4);
+
+    const planBox = $("planBox");
+    planBox.innerHTML = "";
+    if(!picked.length){
+      planBox.innerHTML = `<div class="plan"><h4>등록된 요금제가 없습니다</h4><p>reserved → 코드 입력 후 관리자에서 요금제를 등록해주세요.</p></div>`;
+      LAST_RESULT = { needs, picked: [] };
+      return;
+    }
+
+    picked.forEach((p, idx)=>{
+      const rank = idx+1;
+      const competitor = parseNumberFlexible(p.competitorPrice);
+      const now = parseNumberFlexible(p.priceDiscount);
+      const was = parseNumberFlexible(p.priceRegular || 0);
+      const savePctVsCompetitor = calcSavePercent(now, competitor);
+      const saveLabel = (savePctVsCompetitor !== null) ? `${savePctVsCompetitor}% 저렴` : null;
+      const saveWon = (was && now && was > now) ? (was - now) : 0;
+
+      const rankClass = rank===1 ? "rank1" : rank===2 ? "rank2" : rank===3 ? "rank3" : "rank4";
+      const rankText = `${rank}순위 · 적합도 ${Math.round(p._fit||0)}점`;
+      const reason = buildReasonText(p, needs);
+
+      const div=document.createElement("div");
+      div.className=`plan ${rankClass}`;
+      div.innerHTML = `
+        <div class="rankRibbon">${rankText}</div>
+
+        <div class="planTop">
+          <div>
+            <h4>${escapeHtml(p.carrierType || "알뜰폰")} ·
+              <span class="priceNow">${fmtWon(now)}</span>
+              ${was ? `<span class="priceWas">${fmtWon(was)}</span>` : ``}
+            </h4>
+            <p>
+              데이터: ${fmtData(p)}<br/>
+              통화: ${fmtCall(p)}<br/>
+              문자: ${fmtSms(p)}<br/>
+              소진 후: ${afterLabel(p.after)}
+            </p>
+
+            <div class="badges" style="margin-top:10px;">
+              <span class="badge rank hot">데이터 ${Math.round(p._scoreData||0)}점</span>
+              <span class="badge rank good">통화 ${Math.round(p._scoreCall||0)}점</span>
+              <span class="badge rank" style="border-color:rgba(47,107,255,.18);background:rgba(47,107,255,.08);color:#1236b8;">문자 ${Math.round(p._scoreSms||0)}점</span>
+              <span class="badge rank" style="border-color:rgba(14,20,36,.12);background:rgba(255,255,255,.70);color:rgba(14,20,36,.75);">안전 ${Math.round(p._scoreSafety||0)}점</span>
+            </div>
+
+            ${saveWon ? `<div class="saveText">할인 적용: ${fmtWon(saveWon)} 절감</div>` : ``}
+          </div>
+
+          ${saveLabel ? `<div class="savePill">✅ ${saveLabel}</div>` : ``}
+        </div>
+
+        <div class="rankReason">${reason}</div>
+        ${p.memo ? `<div class="mini">메모: ${escapeHtml(p.memo)}</div>` : ``}
+      `;
+      planBox.appendChild(div);
+    });
+
+    LAST_RESULT = { needs, picked };
+    updateContactHint();
+  }
+
+  function buildReasonText(p, needs){
+    const dataGB = parseNumberFlexible(p.dataGB);
+    const d = Math.round(needs.needDataGB);
+    const dText = dataGB >= d ? `데이터가 기준(${d}GB) 이상` : `데이터가 기준(${d}GB)에 부족`;
+
+    const callText = (()=> {
+      if(needs.preferUnlimitedCall){
+        if(p.callType==="unlimited") return "통화: 조건없는 무제한";
+        if(p.callType==="basic") return `통화: 기본제공 · 유료통화 ${parseNumberFlexible(p.callPaidMin)}분`;
+        return `통화: 직접입력 ${parseNumberFlexible(p.callMin)}분(무제한 선호 대비 부족)`;
+      }
+      if(needs.needCallMin===0) return "통화: 필요 낮음";
+      if(p.callType==="unlimited") return "통화: 무제한으로 안정적";
+      if(p.callType==="basic"){
+        return `통화: 기본제공 · 유료통화 ${parseNumberFlexible(p.callPaidMin)}분`;
+      }
+      return `통화: 직접입력 ${parseNumberFlexible(p.callMin)}분`;
+    })();
+
+    const smsText = (()=> {
+      if(needs.preferUnlimitedSms){
+        if(p.smsType==="unlimited") return "문자: 무제한";
+        return `문자: 기본제공(조건부)`;
+      }
+      if(p.smsType==="unlimited") return "문자: 무제한";
+      return "문자: 기본제공(조건부)";
+    })();
+
+    const safety = (()=> {
+      if(p.after==="metered") return "소진 후: 종량과금(초과요금 가능) → 주의";
+      if(p.after==="cut") return "소진 후: 차단(끊김 가능)";
+      return "소진 후: 속도제어(추가요금 없음)";
+    })();
+
+    return `• <b>${dText}</b><br/>• ${callText} · ${smsText}<br/>• ${safety}`;
+  }
+
+  function pickPlans(plans, needs, maxN=4){
+    if(!Array.isArray(plans) || plans.length===0) return [];
+    const scored = plans.map(p=>{
+      p = migrateLegacyPlan(p);
+
+      const sData = scoreData(p, needs);
+      const sCall = scoreCall(p, needs);
+      const sSms  = scoreSms(p, needs);
+      const sSafety = scoreSafety(p, needs);
+      const sPrice = scorePrice(p);
+
+      const fit =
+        sData*0.40 +
+        sCall*0.30 +
+        sSms *0.15 +
+        sSafety*0.10 +
+        sPrice*0.05;
+
+      // 보호 모드일 때 종량은 거의 탈락
+      if(needs.protect && p.after==="metered"){
+        return {...p, _fit:-1e9, _scoreData:sData, _scoreCall:sCall, _scoreSms:sSms, _scoreSafety:sSafety, _scorePrice:sPrice};
+      }
+      return {...p, _fit:fit, _scoreData:sData, _scoreCall:sCall, _scoreSms:sSms, _scoreSafety:sSafety, _scorePrice:sPrice};
+    }).sort((a,b)=>b._fit-a._fit);
+
+    const picked = diversify(scored).slice(0, Math.min(maxN, scored.length));
+
+    // 예산 우대 정렬
+    if(needs.budgetRanges && needs.budgetRanges.length){
+      picked.sort((a,b)=>{
+        const ain = inBudget(a, needs.budgetRanges) ? 1 : 0;
+        const bin = inBudget(b, needs.budgetRanges) ? 1 : 0;
+        if(ain!==bin) return bin-ain;
+        return b._fit-a._fit;
+      });
+    }
+    return picked;
+  }
+
+  function inBudget(p, ranges){
+    const price = parseNumberFlexible(p.priceDiscount);
+    return ranges.some(([min,max]) => price>=min && price<max);
+  }
+
+  function diversify(arr){
+    const out = [];
+    const seen = new Set();
+    for(const p of arr){
+      const key = `${parseNumberFlexible(p.dataGB)}|${p.callType}|${p.smsType}|${p.after}|${parseNumberFlexible(p.priceDiscount)}`;
+      if(seen.has(key)) continue;
+      seen.add(key);
+      out.push(p);
+      if(out.length>=4) break;
+    }
+    if(out.length<2) return arr.slice(0, Math.min(4, arr.length));
+    return out;
+  }
+
+  function scoreData(p, needs){
+    const need = needs.needDataGB;
+    const have = parseNumberFlexible(p.dataGB);
+    const diff = have - need;
+    if(diff < 0) return clamp(20 + diff*12, 0, 100);
+    const overshoot = diff;
+    const score = 100 - Math.min(38, overshoot*2.5);
+    return clamp(score, 0, 100);
+  }
+
+  function scoreCall(p, needs){
+    const type = p.callType || "unlimited";
+    const paidMin = parseNumberFlexible(p.callPaidMin);
+    const directMin = parseNumberFlexible(p.callMin);
+
+    const pub = needs.publicCall;
+    const pubRisk = (pub==="often") ? 2 : (pub==="sometimes" ? 1 : 0);
+    const pubUnknown = (pub==="unknown") ? 1 : 0;
+    const risk = pubRisk + pubUnknown;
+
+    if(needs.preferUnlimitedCall){
+      if(type==="unlimited") return 100;
+      if(type==="basic"){
+        let base = 75;
+        if(risk>=2){
+          if(paidMin>=120) base = 92;
+          else if(paidMin>=60) base = 82;
+          else if(paidMin>=30) base = 62;
+          else base = 30;
+        }else if(risk===1){
+          if(paidMin>=60) base = 86;
+          else if(paidMin>=30) base = 72;
+          else base = 48;
+        }else{
+          base = 82;
+        }
+        return clamp(base,0,100);
+      }
+      if(type==="direct"){
+        if(directMin>=400) return 55;
+        if(directMin>=200) return 42;
+        return 18;
+      }
+      return 0;
+    }
+
+    if(needs.needCallMin===0){
+      if(type==="direct" && directMin>0) return 75;
+      if(type==="basic") return 82;
+      return 92;
+    }
+
+    if(type==="unlimited") return 92;
+
+    if(type==="direct"){
+      const diff = directMin - needs.needCallMin;
+      if(diff < 0) return clamp(40 + diff*0.18, 0, 90);
+      const over = diff;
+      const s = 92 - Math.min(18, over*0.03);
+      return clamp(s,0,100);
+    }
+
+    if(type==="basic"){
+      let s = 84;
+      if(risk>=2){
+        if(paidMin>=120) s = 90;
+        else if(paidMin>=60) s = 80;
+        else if(paidMin>=30) s = 62;
+        else s = 35;
+      }else if(risk===1){
+        if(paidMin>=60) s = 86;
+        else if(paidMin>=30) s = 74;
+        else s = 52;
+      }else{
+        s = 86;
+      }
+      return clamp(s,0,100);
+    }
+    return 0;
+  }
+
+  function scoreSms(p, needs){
+    const type = p.smsType || "unlimited";
+    const cond = String(p.smsCondition||"").trim();
+    if(needs.preferUnlimitedSms){
+      if(type==="unlimited") return 100;
+      return cond ? 70 : 40;
+    }
+    if(type==="unlimited") return 92;
+    if(!cond) return 60;
+    const len = cond.length;
+    const s = 82 - Math.min(18, Math.max(0, (len-20))*0.4);
+    return clamp(s, 45, 90);
+  }
+
+  function scoreSafety(p, needs){
+    let s = 80;
+
+    if(p.after==="speed"){
+      s = 92;
+      const mbps = throttleToMbps(p.throttleVal, p.throttleUnit);
+      if(mbps>=3) s += 6;
+      else if(mbps>=1) s += 3;
+      else if(mbps>=0.4) s += 1;
+
+      // Q8에서 느린 무제한 선호면 speed 구조에 약간 가산
+      if(needs.okSlow) s += 2;
+    }
+    else if(p.after==="cut"){
+      // Q8에서 차단을 원하면 감점 줄임, 아니면 크게 감점
+      s = needs.wantsCut ? 80 : (needs.hateCut || needs.protect ? 35 : 55);
+    }
+    else if(p.after==="metered"){
+      // Q8에서 과금 허용이면 과도 감점하지 않음
+      if(needs.wantsMeteredOk) s = 70;
+      else s = needs.hateOverage || needs.protect ? 10 : 35;
+    }
+
+    return clamp(s,0,100);
+  }
+
+  function scorePrice(p){
+    const now = parseNumberFlexible(p.priceDiscount);
+    if(!now) return 50;
+    const s = 110 - (now/1000)*1.5;
+    return clamp(s, 0, 100);
+  }
+
+  function kakaoConsult(){ window.location.href = SETTINGS.kakaoChatUrl || DEFAULT_SETTINGS.kakaoChatUrl; }
+  function reserve(){ window.location.href = SETTINGS.reservationUrl || DEFAULT_SETTINGS.reservationUrl; }
+
+  /***********************
+   * 결과 공유(카톡)
+   * - 특정 1명에게 자동 전송은 불가(카카오 SDK/앱키/권한 필요)
+   * - 대신 "공유하기"로 카톡 선택하여 보내기 + 복사/링크 fallback
+   ***********************/
+  function composeShareText(){
+    if(!LAST_RESULT) return "요금제 선택 체크 결과";
+    const { needs, picked } = LAST_RESULT;
+
+    const header = `요금제 선택 체크 결과\n(판매/최저가 비교 아님 · 불편/과금 사고 예방)\n`;
+    const criteria = [
+      `- 데이터 최소 기준: ${Math.round(needs.needDataGB)}GB+`,
+      `- 통화: ${needs.preferUnlimitedCall ? "무제한 선호" : (needs.needCallMin===0 ? "거의 없음" : needs.needCallMin+"분")}`,
+      `- 문자: ${needs.preferUnlimitedSms ? "무제한 선호" : needs.needSms+"건"}`,
+      (needs.publicCall==="often"||needs.publicCall==="sometimes") ? `- 대표/유선/070 통화 있음 → 기본제공의 유료통화분 중요` : null,
+      needs.protect ? `- 보호 모드: 과금/끊김 위험 줄이기 우선` : null,
+      `- 약정 종료 안내 선호: ${endNoticeLabel(needs.pref.endNotice)}`
+    ].filter(Boolean).join("\n");
+
+    const top = picked.slice(0,2).map((p, i)=>{
+      const price = fmtWon(parseNumberFlexible(p.priceDiscount));
+      return `\n${i+1}순위) ${p.carrierType || "알뜰폰"} · ${price}\n   데이터 ${parseNumberFlexible(p.dataGB)}GB / 통화 ${p.callType} / 문자 ${p.smsType} / 소진후 ${p.after}`;
+    }).join("\n");
+
+    const contact = [
+      "\n\n[상담/문의]",
+      SETTINGS.kakaoChatUrl ? `- 카톡상담: ${SETTINGS.kakaoChatUrl}` : null,
+      SETTINGS.phone ? `- 문의전화: ${SETTINGS.phone}` : null,
+      SETTINGS.memo ? `- 안내: ${SETTINGS.memo}` : null
+    ].filter(Boolean).join("\n");
+
+    return header + "\n" + criteria + "\n\n[상위 결과]" + (top || "\n(요금제 데이터 없음)") + contact;
+  }
+
+  async function shareResultToKakao(){
+    const text = composeShareText();
+
+    // 1) Web Share(모바일) -> 카톡 선택 가능
+    if(navigator.share){
+      try{
+        await navigator.share({ title: "요금제 선택 체크 결과", text });
+        return;
+      }catch(e){
+        // 사용자가 취소했을 수도 있음 -> fallback
+      }
+    }
+
+    // 2) fallback: 클립보드 복사 + 카톡상담 링크 열기
+    try{
+      await navigator.clipboard.writeText(text);
+      toast("결과를 복사했어요. 카톡에서 붙여넣기 하세요.");
+    }catch(e){
+      toast("복사에 실패했어요. 아래 상담 버튼으로 이동 후 직접 공유해주세요.");
+    }
+
+    // 카톡상담 링크가 있으면 열어주기(사용자 선택/붙여넣기용)
+    if(SETTINGS.kakaoChatUrl){
+      window.open(SETTINGS.kakaoChatUrl, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  /***********************
+   * ADMIN DB
+   ***********************/
+  const LS_KEY = "planCheck_plans_v9";
+  let editingId=null;
+
+  function loadPlans(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    }catch(e){ return []; }
+  }
+  function savePlans(plans){ localStorage.setItem(LS_KEY, JSON.stringify(plans)); }
+
+  function toggleCallInputs(){
+    const t = document.getElementById("fCallType").value;
+    const paid = document.getElementById("fCallPaidMin");
+    const direct = document.getElementById("fCallMin");
+    paid.disabled = (t !== "basic");
+    direct.disabled = (t !== "direct");
+    if(t !== "basic") paid.value = "";
+    if(t !== "direct") direct.value = "";
+  }
+
+  function toggleSmsInputs(){
+    const t = document.getElementById("fSmsType").value;
+    const cond = document.getElementById("fSmsCondition");
+    cond.disabled = (t !== "basic");
+    if(t !== "basic") cond.value = "";
+  }
+
+  function resetForm(){
+    editingId=null;
+    $("formTitle").textContent="요금제 추가";
+    $("deleteBtn").classList.add("hidden");
+
+    $("fCarrierType").value="알뜰폰";
+    $("fPriceRegular").value="";
+    $("fPriceDiscount").value="";
+    $("fCompetitorPrice").value="";
+
+    $("fCallType").value="unlimited";
+    $("fCallPaidMin").value="";
+    $("fCallMin").value="";
+
+    $("fSmsType").value="unlimited";
+    $("fSmsCondition").value="";
+
+    $("fDataGB").value="";
+    $("fThrottleVal").value="";
+    $("fThrottleUnit").value="Mbps";
+    $("fAfter").value="speed";
+
+    $("fDataDesc").value="";
+    $("fMemo").value="";
+
+    toggleCallInputs();
+    toggleSmsInputs();
+    updateCalcHint();
+  }
+
+  function savePlan(){
+    const carrierType = "알뜰폰";
+
+    const priceRegular = $("fPriceRegular").value ? parseNumberFlexible($("fPriceRegular").value) : null;
+    const priceDiscount = parseNumberFlexible($("fPriceDiscount").value);
+    const competitorPrice = $("fCompetitorPrice").value ? parseNumberFlexible($("fCompetitorPrice").value) : null;
+
+    const callType = $("fCallType").value || "unlimited";
+    const callPaidMin = (callType==="basic") ? parseNumberFlexible($("fCallPaidMin").value) : 0;
+    const callMin = (callType==="direct") ? parseNumberFlexible($("fCallMin").value) : 0;
+
+    const smsType = $("fSmsType").value || "unlimited";
+    const smsCondition = (smsType==="basic") ? String($("fSmsCondition").value || "").trim() : "";
+
+    const dataGB = parseGB($("fDataGB").value);
+
+    const speedParsed = parseSpeed($("fThrottleVal").value, $("fThrottleUnit").value || "Mbps");
+    const throttleVal = speedParsed.val;
+    const throttleUnit = speedParsed.unit;
+    $("fThrottleUnit").value = throttleUnit;
+
+    const after = $("fAfter").value || "speed";
+    const dataDesc = String($("fDataDesc").value || "").trim();
+    const memo = String($("fMemo").value || "").trim();
+
+    if(!priceDiscount || !dataGB){ toast("할인가, 데이터(GB)는 필수입니다."); return; }
+    if(callType==="basic" && !callPaidMin){ toast("통화가 ‘기본제공’이면 유료통화 가능(분)을 입력하세요."); return; }
+    if(callType==="direct" && !callMin){ toast("통화가 ‘직접입력’이면 통화(분)을 입력하세요."); return; }
+    if(smsType==="basic" && !smsCondition){ toast("문자가 ‘기본제공(조건부무제한)’이면 조건을 글로 입력하세요."); return; }
+
+    const plans = loadPlans();
+    const plan = {
+      id: editingId || cryptoId(),
+      carrierType,
+      priceRegular,
+      priceDiscount,
+      competitorPrice,
+      callType,
+      callPaidMin,
+      callMin,
+      smsType,
+      smsCondition,
+      dataGB,
+      throttleVal,
+      throttleUnit,
+      after,
+      dataDesc,
+      memo
+    };
+
+    if(editingId){
+      const idx = plans.findIndex(p=>p.id===editingId);
+      if(idx>=0) plans[idx]=plan;
+    }else{
+      plans.unshift(plan);
+    }
+
+    savePlans(plans);
+    resetForm();
+    renderAdminList();
+    toast("저장 완료");
+  }
+
+  function editPlan(id){
+    const p0 = loadPlans().find(x=>x.id===id);
+    if(!p0) return;
+    const p = migrateLegacyPlan(p0);
+
+    editingId=id;
+    $("formTitle").textContent="요금제 수정";
+    $("deleteBtn").classList.remove("hidden");
+
+    $("fCarrierType").value="알뜰폰";
+
+    $("fPriceRegular").value=(p.priceRegular ?? "");
+    $("fPriceDiscount").value=(p.priceDiscount ?? "");
+    $("fCompetitorPrice").value=(p.competitorPrice ?? "");
+
+    $("fCallType").value=p.callType || "unlimited";
+    $("fCallPaidMin").value=(p.callType==="basic") ? (p.callPaidMin ?? "") : "";
+    $("fCallMin").value=(p.callType==="direct") ? (p.callMin ?? "") : "";
+
+    $("fSmsType").value=p.smsType || "unlimited";
+    $("fSmsCondition").value=(p.smsType==="basic") ? (p.smsCondition ?? "") : "";
+
+    $("fDataGB").value=(p.dataGB ?? "");
+    $("fThrottleVal").value=(p.throttleVal ?? "");
+    $("fThrottleUnit").value=(p.throttleUnit ?? "Mbps");
+    $("fAfter").value=(p.after ?? "speed");
+
+    $("fDataDesc").value=(p.dataDesc ?? "");
+    $("fMemo").value=(p.memo ?? "");
+
+    toggleCallInputs();
+    toggleSmsInputs();
+    updateCalcHint();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function migrateLegacyPlan(p){
+    const out = {...p};
+    if(!out.carrierType) out.carrierType = "알뜰폰";
+    if(out.throttleUnit==null) out.throttleUnit = "Mbps";
+    if(out.throttleVal==null && out.throttleMbps!=null){ out.throttleVal = out.throttleMbps; out.throttleUnit="Mbps"; }
+    if(!out.after) out.after = "speed";
+    out.callType = out.callType || "unlimited";
+    out.callPaidMin = out.callPaidMin ?? 0;
+    out.callMin = out.callMin ?? 0;
+    out.smsType = out.smsType || "unlimited";
+    out.smsCondition = out.smsCondition ?? "";
+    return out;
+  }
+
+  function deletePlan(){
+    if(!editingId) return;
+    const plans = loadPlans().filter(p=>p.id!==editingId);
+    savePlans(plans);
+    resetForm();
+    renderAdminList();
+    toast("삭제 완료");
+  }
+
+  function renderAdminList(){
+    const plans = loadPlans().map(migrateLegacyPlan);
+    const box = $("planList");
+    box.innerHTML="";
+
+    if(plans.length===0){
+      box.innerHTML = `<div class="item"><div class="itemName">등록된 요금제가 없습니다</div><div class="itemMeta">요금제를 추가하거나 엑셀로 업로드하세요.</div></div>`;
+      return;
+    }
+
+    plans.forEach(p=>{
+      const now = parseNumberFlexible(p.priceDiscount);
+      const was = parseNumberFlexible(p.priceRegular || 0);
+      const saveWon = (was && now && was > now) ? (was - now) : 0;
+
+      const pct = calcSavePercent(now, parseNumberFlexible(p.competitorPrice));
+      const pctBadge = (pct!==null)
+        ? `<span class="badge" style="border-color:rgba(18,183,106,.22);background:rgba(18,183,106,.06);color:#05603a;">타사 대비 ${pct}% 저렴</span>`
+        : `<span class="badge">비교값 없음</span>`;
+
+      const div=document.createElement("div");
+      div.className="item";
+      div.innerHTML = `
+        <div class="itemTop">
+          <div>
+            <div class="itemName">
+              ${escapeHtml(p.carrierType || "알뜰폰")} ·
+              <span class="priceNow">${fmtWon(now)}</span>
+              ${was ? `<span class="priceWas">${fmtWon(was)}</span>` : ``}
+            </div>
+            <div class="itemMeta">
+              통화: ${fmtCall(p)}<br/>
+              문자: ${fmtSms(p)}<br/>
+              데이터: ${fmtData(p)} · 소진 후: ${afterLabel(p.after)}
+            </div>
+            ${saveWon ? `<div class="saveText">할인 적용: ${fmtWon(saveWon)} 절감</div>` : ``}
+            <div class="badges" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+              ${pctBadge}
+            </div>
+            <div class="tiny" style="margin-top:6px;">id: ${escapeHtml(p.id)}</div>
+          </div>
+          <div class="row2">
+            <button class="smallBtn primary" type="button" onclick="editPlan('${p.id}')">수정</button>
+          </div>
+        </div>
+        ${p.memo ? `<div class="tiny" style="margin-top:10px;">메모: ${escapeHtml(p.memo)}</div>` : ``}
+      `;
+      box.appendChild(div);
+    });
+  }
+
+  function updateCalcHint(){
+    const reg = $("fPriceRegular").value ? parseNumberFlexible($("fPriceRegular").value) : 0;
+    const dis = $("fPriceDiscount").value ? parseNumberFlexible($("fPriceDiscount").value) : 0;
+    const c = $("fCompetitorPrice").value ? parseNumberFlexible($("fCompetitorPrice").value) : 0;
+
+    const diff = (reg && dis && reg > dis) ? (reg - dis) : 0;
+    const pct = calcSavePercent(dis, c);
+
+    let txt = "타사 유사요금을 입력하면 ‘몇 % 저렴’이 계산됩니다.";
+    if(diff){
+      txt = `정가 대비 할인: ${fmtWon(diff)} 절감`;
+      if(pct!==null) txt += ` · 타사 대비 약 ${pct}% 저렴`;
+    }else{
+      if(pct!==null) txt = `타사 대비 약 ${pct}% 저렴`;
+    }
+    $("calcHint").textContent = txt;
+  }
+  ["fPriceRegular","fPriceDiscount","fCompetitorPrice"].forEach(id=>{
+    document.addEventListener("input",(e)=>{ if(e.target && e.target.id===id) updateCalcHint(); });
+  });
+
+  /***********************
+   * Excel
+   ***********************/
+  const EXCEL_HEADERS = [
+    "id(선택)",
+    "통신사 유형(고정:알뜰폰)",
+    "정가(원)",
+    "할인가(원)*",
+    "타사 유사요금(원)",
+
+    "음성통화시간 유형(unlimited|basic|direct)",
+    "유료통화 가능(분:basic일 때)",
+    "직접입력 통화(분:direct일 때)",
+
+    "문자 유형(unlimited|basic)",
+    "문자 조건(글:basic일 때)",
+
+    "데이터(GB)*",
+    "데이터 소진 후 속도값",
+    "속도 단위(Mbps|Kbps)",
+
+    "데이터 소진 후 구조(speed|cut|metered)",
+    "표시용 설명(옵션)",
+    "메모(옵션)"
+  ];
+
+  function downloadTemplate(){
+    if(!window.XLSX){ toast("엑셀 기능 로딩 실패(네트워크 확인)"); return; }
+
+    const rows = [
+      {
+        "id(선택)": "",
+        "통신사 유형(고정:알뜰폰)": "알뜰폰",
+        "정가(원)": "22,000원",
+        "할인가(원)*": "18,900원",
+        "타사 유사요금(원)": "22,000원",
+
+        "음성통화시간 유형(unlimited|basic|direct)": "basic",
+        "유료통화 가능(분:basic일 때)": "60분",
+        "직접입력 통화(분:direct일 때)": "",
+
+        "문자 유형(unlimited|basic)": "basic",
+        "문자 조건(글:basic일 때)": "SMS 무제한, MMS 월 100건",
+
+        "데이터(GB)*": "15GB",
+        "데이터 소진 후 속도값": "1Mbps",
+        "속도 단위(Mbps|Kbps)": "Mbps",
+
+        "데이터 소진 후 구조(speed|cut|metered)": "speed",
+        "표시용 설명(옵션)": "15GB + 1Mbps",
+        "메모(옵션)": "대표번호/유선 통화가 있으면 유료통화 가능(분)이 중요"
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(rows, { header: EXCEL_HEADERS });
+    XLSX.utils.sheet_add_aoa(ws, [EXCEL_HEADERS], { origin: "A1" });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "요금제");
+    XLSX.writeFile(wb, "요금제_업로드_템플릿(한글).xlsx");
+  }
+
+  function triggerExcel(){
+    if(!window.XLSX){ toast("엑셀 기능 로딩 실패(네트워크 확인)"); return; }
+    $("excelInput").click();
+  }
+
+  $("excelInput").addEventListener("change", async (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    try{
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, {type:"array"});
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(ws, {defval:""});
+      if(!json.length){ toast("엑셀에 데이터가 없습니다"); return; }
+
+      const existing = loadPlans().map(migrateLegacyPlan);
+      const map = new Map(existing.map(p=>[p.id, p ]));
+
+      let upserted = 0;
+      let skipped = 0;
+
+      for(const row of json){
+        const r = normalizeExcelRow(row);
+
+        const carrierType = "알뜰폰";
+        const dataGB = parseGB(r.dataGB);
+        const priceDiscount = parseNumberFlexible(r.priceDiscount);
+
+        if(!dataGB || !priceDiscount){ skipped++; continue; }
+
+        const id = String(r.id || "").trim() || cryptoId();
+
+        const callType = normalizeEnum(r.callType, "unlimited", ["unlimited","basic","direct"]);
+        const callPaidMin = (callType==="basic") ? parseNumberFlexible(r.callPaidMin) : 0;
+        const callMin = (callType==="direct") ? parseNumberFlexible(r.callMin) : 0;
+        if(callType==="basic" && !callPaidMin){ skipped++; continue; }
+        if(callType==="direct" && !callMin){ skipped++; continue; }
+
+        const smsType = normalizeEnum(r.smsType, "unlimited", ["unlimited","basic"]);
+        const smsCondition = (smsType==="basic") ? String(r.smsCondition||"").trim() : "";
+        if(smsType==="basic" && !smsCondition){ skipped++; continue; }
+
+        const speedParsed = parseSpeed(r.throttleVal, r.throttleUnit);
+
+        const plan = {
+          id,
+          carrierType,
+          priceRegular: r.priceRegular!=="" && r.priceRegular!=null ? parseNumberFlexible(r.priceRegular) : null,
+          priceDiscount,
+          competitorPrice: r.competitorPrice!=="" && r.competitorPrice!=null ? parseNumberFlexible(r.competitorPrice) : null,
+
+          callType,
+          callPaidMin,
+          callMin,
+
+          smsType,
+          smsCondition,
+
+          dataGB,
+          throttleVal: speedParsed.val,
+          throttleUnit: speedParsed.unit,
+
+          after: normalizeEnum(r.after, "speed", ["speed","cut","metered"]),
+          dataDesc: String(r.dataDesc || "").trim(),
+          memo: String(r.memo || "").trim()
+        };
+
+        map.set(id, plan);
+        upserted++;
+      }
+
+      savePlans(Array.from(map.values()));
+      renderAdminList();
+      toast(`업로드 완료: ${upserted}건 반영, ${skipped}건 건너뜀`);
+    }catch(err){
+      console.error(err);
+      toast("엑셀 업로드 실패(형식/파일 확인)");
+    }finally{
+      e.target.value = "";
+    }
+  });
+
+  function exportExcel(){
+    if(!window.XLSX){ toast("엑셀 기능 로딩 실패(네트워크 확인)"); return; }
+    const plans = loadPlans().map(migrateLegacyPlan);
+    if(!plans.length){ toast("내보낼 요금제가 없습니다"); return; }
+
+    const rows = plans.map(p=>({
+      "id(선택)": p.id,
+      "통신사 유형(고정:알뜰폰)": "알뜰폰",
+      "정가(원)": p.priceRegular ?? "",
+      "할인가(원)*": p.priceDiscount ?? "",
+      "타사 유사요금(원)": p.competitorPrice ?? "",
+
+      "음성통화시간 유형(unlimited|basic|direct)": p.callType ?? "unlimited",
+      "유료통화 가능(분:basic일 때)": (p.callType==="basic") ? (p.callPaidMin ?? "") : "",
+      "직접입력 통화(분:direct일 때)": (p.callType==="direct") ? (p.callMin ?? "") : "",
+
+      "문자 유형(unlimited|basic)": p.smsType ?? "unlimited",
+      "문자 조건(글:basic일 때)": (p.smsType==="basic") ? (p.smsCondition ?? "") : "",
+
+      "데이터(GB)*": p.dataGB ?? "",
+      "데이터 소진 후 속도값": p.throttleVal ?? "",
+      "속도 단위(Mbps|Kbps)": p.throttleUnit ?? "Mbps",
+
+      "데이터 소진 후 구조(speed|cut|metered)": p.after ?? "speed",
+      "표시용 설명(옵션)": p.dataDesc ?? "",
+      "메모(옵션)": p.memo ?? ""
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows, { header: EXCEL_HEADERS });
+    XLSX.utils.sheet_add_aoa(ws, [EXCEL_HEADERS], { origin:"A1" });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "요금제");
+    XLSX.writeFile(wb, "요금제_export(한글).xlsx");
+  }
+
+  function normalizeEnum(v, fallback, allow){
+    const s = String(v || "").trim();
+    return allow.includes(s) ? s : fallback;
+  }
+
+  function normalizeExcelRow(row){
+    const out = {};
+    for(const [k,v] of Object.entries(row)){
+      const key = String(k).trim();
+      const lower = key.toLowerCase();
+
+      if(key.startsWith("id")) out.id = v;
+
+      else if(key.includes("정가")) out.priceRegular = v;
+      else if(key.includes("할인가")) out.priceDiscount = v;
+      else if(key.includes("타사 유사요금")) out.competitorPrice = v;
+
+      else if(key.includes("음성통화시간 유형")) out.callType = v;
+      else if(key.includes("유료통화 가능")) out.callPaidMin = v;
+      else if(key.includes("직접입력 통화")) out.callMin = v;
+
+      else if(key.includes("문자 유형")) out.smsType = v;
+      else if(key.includes("문자 조건")) out.smsCondition = v;
+
+      else if(key.startsWith("데이터(GB)")) out.dataGB = v;
+      else if(key.includes("데이터 소진 후 속도값")) out.throttleVal = v;
+      else if(key.includes("속도 단위")) out.throttleUnit = v;
+
+      else if(key.includes("데이터 소진 후 구조")) out.after = v;
+      else if(key.includes("표시용 설명")) out.dataDesc = v;
+      else if(key.includes("메모")) out.memo = v;
+
+      if(lower.includes("price_regular")) out.priceRegular = out.priceRegular ?? v;
+      if(lower.includes("price_discount")) out.priceDiscount = out.priceDiscount ?? v;
+      if(lower.includes("competitor")) out.competitorPrice = out.competitorPrice ?? v;
+      if(lower.includes("datagb")) out.dataGB = out.dataGB ?? v;
+      if(lower.includes("throttle")) out.throttleVal = out.throttleVal ?? v;
+      if(lower.startsWith("after")) out.after = out.after ?? v;
+      if(lower.includes("datadesc")) out.dataDesc = out.dataDesc ?? v;
+      if(lower==="memo") out.memo = out.memo ?? v;
+    }
+    return out;
+  }
+
+  /***********************
+   * Demo seed
+   ***********************/
+  function seedDemo(){
+    const demo = [
+      {
+        id: cryptoId(),
+        carrierType:"알뜰폰",
+        priceRegular:36300,
+        priceDiscount:25900,
+        competitorPrice:55000,
+        callType:"unlimited",
+        callPaidMin:0,
+        callMin:0,
+        smsType:"unlimited",
+        smsCondition:"",
+        dataGB:15,
+        throttleVal:3,
+        throttleUnit:"Mbps",
+        after:"speed",
+        dataDesc:"15GB + 3Mbps",
+        memo:"데모1"
+      },
+      {
+        id: cryptoId(),
+        carrierType:"알뜰폰",
+        priceRegular:22000,
+        priceDiscount:18900,
+        competitorPrice:22000,
+        callType:"basic",
+        callPaidMin:60,
+        callMin:0,
+        smsType:"basic",
+        smsCondition:"SMS 무제한, MMS 월 100건",
+        dataGB:15,
+        throttleVal:1,
+        throttleUnit:"Mbps",
+        after:"speed",
+        dataDesc:"15GB + 1Mbps",
+        memo:"대표번호/유선 통화 있으면 유료통화분 중요"
+      },
+      {
+        id: cryptoId(),
+        carrierType:"알뜰폰",
+        priceRegular:17000,
+        priceDiscount:13900,
+        competitorPrice:17000,
+        callType:"direct",
+        callPaidMin:0,
+        callMin:200,
+        smsType:"unlimited",
+        smsCondition:"",
+        dataGB:6,
+        throttleVal:400,
+        throttleUnit:"Kbps",
+        after:"speed",
+        dataDesc:"6GB + 400Kbps",
+        memo:"통화 직접입력 예시"
+      },
+      {
+        id: cryptoId(),
+        carrierType:"알뜰폰",
+        priceRegular:9900,
+        priceDiscount:8900,
+        competitorPrice:35000,
+        callType:"unlimited",
+        callPaidMin:0,
+        callMin:0,
+        smsType:"unlimited",
+        smsCondition:"",
+        dataGB:4,
+        throttleVal:400,
+        throttleUnit:"Kbps",
+        after:"speed",
+        dataDesc:"4GB + 400Kbps",
+        memo:"데모4"
+      }
+    ];
+    savePlans(demo);
+    renderAdminList();
+    toast("데모 저장 완료");
+  }
+
+  /***********************
+   * Utils
+   ***********************/
+  function escapeHtml(s){
+    return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+  function parseNumberFlexible(v){
+    if(v == null) return 0;
+    if(typeof v === "number" && Number.isFinite(v)) return v;
+    let s = String(v).trim();
+    if(!s) return 0;
+    s = s.replaceAll(",", "").replace(/\s+/g, "");
+    const m = s.match(/-?\d+(\.\d+)?/);
+    if(!m) return 0;
+    const n = Number(m[0]);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function parseGB(v){ return parseNumberFlexible(v); }
+
+  function parseSpeed(valLike, unitLike){
+    const raw = String(valLike ?? "").trim();
+    const rawUnit = String(unitLike ?? "").trim();
+    let unit = (rawUnit === "Kbps" || rawUnit === "kbps") ? "Kbps" : "Mbps";
+
+    const lower = raw.toLowerCase().replace(/\s+/g,"");
+    if(lower.includes("kbps") || lower.includes("kbit") || lower.endsWith("k")) unit = "Kbps";
+    if(lower.includes("mbps") || lower.includes("mbit") || lower.endsWith("m")) unit = "Mbps";
+
+    const val = parseNumberFlexible(raw);
+    return { val: val || 0, unit };
+  }
+
+  function fmtWon(n){ try{ return Number(n).toLocaleString("ko-KR")+"원"; }catch(e){ return (n||0)+"원"; } }
+  function afterLabel(v){
+    if(v==="speed") return "속도제어(추가요금 없음)";
+    if(v==="cut") return "차단";
+    if(v==="metered") return "종량과금";
+    return "-";
+  }
+  function calcSavePercent(my, other){
+    const a = Number(my), b = Number(other);
+    if(!a || !b || b<=0) return null;
+    const pct = ((b-a)/b)*100;
+    return Math.max(0, Math.round(pct));
+  }
+  function cryptoId(){ return "p_" + Math.random().toString(36).slice(2,10) + "_" + Date.now().toString(36); }
+
+  function throttleToMbps(val, unit){
+    const v = parseNumberFlexible(val);
+    if(!v) return 0;
+    if(unit === "Kbps") return v / 1000;
+    return v;
+  }
+  function fmtThrottle(p){
+    const v = parseNumberFlexible(p.throttleVal);
+    if(!v) return "없음";
+    const u = (p.throttleUnit === "Kbps") ? "Kbps" : "Mbps";
+    return `${v}${u}`;
+  }
+   function fmtData(p){
+    const gb = parseNumberFlexible(p.dataGB);
+    const desc = (p.dataDesc||"").trim();
+    if(desc) return escapeHtml(desc);
+    if(p.after === "speed" && parseNumberFlexible(p.throttleVal) > 0){
+      return `${gb}GB + ${fmtThrottle(p)}`;
+    }
+    return `${gb}GB`;
+  }
+
+  function fmtCall(p){
+    const t = p.callType || "unlimited";
+    if(t === "unlimited") return "무제한";
+    if(t === "basic") return `기본제공(휴대폰 무료통화 무제한) · 유료통화 ${parseNumberFlexible(p.callPaidMin)}분`;
+    if(t === "direct") return `직접입력 ${parseNumberFlexible(p.callMin)}분`;
+    return "-";
+  }
+
+  function fmtSms(p){
+    const t = p.smsType || "unlimited";
+    if(t === "unlimited") return "무제한";
+    const cond = String(p.smsCondition || "").trim();
+    return cond ? `기본제공(조건부무제한) · ${escapeHtml(cond)}` : "기본제공(조건부무제한)";
+  }
+
+  /***********************
+   * INIT
+   ***********************/
+  renderRoute();
+  resetForm();
+  updateCalcHint();
+  updateCodeHint();
+  refreshSettingsUI();
+  updateContactHint();
+</script>
+
+</body>
+</html>
+
