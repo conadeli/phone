@@ -59,7 +59,8 @@
     @media (min-width:520px){ .container{padding:18px 18px 104px;} }
     .brandRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
     .h1{margin:0;font-size:18px;font-weight:950;letter-spacing:-.3px;}
-    .sub{margin:3px 0 0;font-size:12px;color:var(--muted);line-height:1.45;}
+    .sub{margin:3px 0 0;font-size:12px;line-height:1.45;}
+    .subRed{color:#f97373;} /* 연한 빨간색 계열, 살짝 눈에 띄게 */
 
     .card{
       background:var(--card);
@@ -167,7 +168,6 @@
     .saveText{display:inline-block;margin-top:8px;font-size:12px;font-weight:1000;color:#05603a;background:rgba(18,183,106,.10);border:1px solid rgba(18,183,106,.25);border-radius:999px;padding:7px 10px;}
     .savePill{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;border:1px solid rgba(18,183,106,.25);background:rgba(18,183,106,.10);color:#05603a;font-size:12px;font-weight:1000;white-space:nowrap;}
 
-    /* Rank highlight */
     .plan.rank1{
       border-color: var(--r1-st);
       background: linear-gradient(180deg, rgba(255,255,255,.92), var(--r1-bg));
@@ -189,9 +189,6 @@
       box-shadow: var(--r4-glow);
     }
 
-    /* ✅ 리본이 요금을 가리던 문제 해결:
-       - 우측 상단으로 이동
-       - planTop에 상단 여백 확보 (겹침 방지) */
     .rankRibbon{
       position:absolute; top:12px; right:12px; left:auto;
       padding:8px 10px;
@@ -208,7 +205,7 @@
       text-overflow: ellipsis;
       pointer-events:none;
     }
-    .planTop{ margin-top:34px; } /* 리본 공간 확보 */
+    .planTop{ margin-top:34px; }
 
     .rankReason{
       margin-top:10px;
@@ -361,7 +358,6 @@
     }
     .lock{position:fixed; inset:0; z-index:999; background:#fff; display:none;}
 
-    /* ✅ 관리자 입력 정렬 */
     .inline2{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -377,6 +373,17 @@
     @media (max-width:520px){
       .inline3{grid-template-columns:1fr 1fr}
     }
+
+    /* 메인 이미지 영역 */
+    .heroInner{padding:0;}
+    .heroImg,
+    .heroImgPreview{
+      display:block;
+      width:100%;
+      border-radius:calc(var(--r20) - 4px);
+      object-fit:cover;
+    }
+    .heroImgPreview{max-height:200px;}
   </style>
 </head>
 <body>
@@ -385,8 +392,8 @@
   <div class="topin">
     <div class="brandRow">
       <div>
-        <div class="h1">요금제 선택 체크</div>
-        <div class="sub">요금제를 고르기 전에, 이 선택이 “안전한지” 먼저 확인합니다.</div>
+        <div class="h1">내가 찾는 맞춤 안전요금제 확인하기</div>
+        <div class="sub subRed">통신비 아끼는 가장 현명한 방법</div>
       </div>
     </div>
   </div>
@@ -396,6 +403,14 @@
 
   <!-- USER PAGE -->
   <section id="userPage">
+
+    <!-- 메인 이미지 카드 (시작하기 위에 위치) -->
+    <div class="card" id="heroCard" style="display:none;">
+      <div class="inner heroInner">
+        <img id="heroImg" class="heroImg" alt="요금제 안내 메인 이미지" />
+      </div>
+    </div>
+
     <div class="card" id="stepIntro">
       <div class="inner">
         <div class="title">시작하기</div>
@@ -486,7 +501,7 @@
       </div>
     </div>
 
-    <!-- ✅ 연락/공유 설정 추가 -->
+    <!-- 연락/공유 설정 -->
     <div class="card">
       <div class="inner">
         <div class="title">연락/공유 설정</div>
@@ -519,6 +534,39 @@
         </div>
 
         <div class="tiny" id="settingsHint"></div>
+      </div>
+    </div>
+
+    <!-- 메인 이미지 업로드 섹션 -->
+    <div class="card">
+      <div class="inner">
+        <div class="title">메인 이미지 업로드</div>
+        <div class="p">
+          메인 페이지 상단에 표시될 이미지를 업로드합니다.<br>
+          (이 브라우저에 저장되며, 새로고침 후에도 유지됩니다.)
+        </div>
+        <div style="height:10px"></div>
+
+        <div class="formGrid">
+          <div>
+            <label>이미지 파일 선택</label>
+            <input id="heroFile" type="file" accept="image/*" />
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="row2">
+          <button class="smallBtn primary" type="button" onclick="saveHeroImage()">이미지 저장</button>
+          <button class="smallBtn" type="button" onclick="clearHeroImage()">이미지 삭제</button>
+        </div>
+
+        <div class="tiny" style="margin-top:8px;">
+          권장 사이즈 : 가로 1200px, 세로 600px (16:9 비율)
+        </div>
+
+        <div style="margin-top:10px;">
+          <img id="heroPreview" class="heroImgPreview" alt="메인 이미지 미리보기" style="display:none;" />
+        </div>
       </div>
     </div>
 
@@ -707,7 +755,6 @@
 <div id="lock" class="lock"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
 <script>
   /***********************
    * SETTINGS (ADMIN EDITABLE)
@@ -719,6 +766,9 @@
     phone: "",
     memo: ""
   };
+
+  /* 메인 이미지 저장 키 */
+  const HERO_IMG_KEY = "planCheck_hero_img_v1";
 
   function loadSettings(){
     try{
@@ -777,6 +827,82 @@
       return;
     }
     el.innerHTML = parts.join(" · ");
+  }
+
+  /***********************
+   * 메인 이미지(히어로 이미지) 관리
+   ***********************/
+  function loadHeroImage(){
+    try{
+      return localStorage.getItem(HERO_IMG_KEY) || "";
+    }catch(e){
+      return "";
+    }
+  }
+
+  function refreshHeroImageUI(){
+    const dataUrl = loadHeroImage();
+    const heroCard = document.getElementById("heroCard");
+    const heroImg  = document.getElementById("heroImg");
+    const preview  = document.getElementById("heroPreview");
+
+    if(heroCard && heroImg){
+      if(dataUrl){
+        heroImg.src = dataUrl;
+        heroCard.style.display = "block";
+      }else{
+        heroImg.removeAttribute("src");
+        heroCard.style.display = "none";
+      }
+    }
+    if(preview){
+      if(dataUrl){
+        preview.src = dataUrl;
+        preview.style.display = "block";
+      }else{
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+      }
+    }
+  }
+
+  function saveHeroImage(){
+    const input = document.getElementById("heroFile");
+    if(!input){ toast("이미지 입력 요소를 찾을 수 없습니다."); return; }
+    const file = (input.files || [])[0];
+    if(!file){
+      toast("이미지 파일을 선택하세요.");
+      return;
+    }
+    if(!file.type || !file.type.startsWith("image/")){
+      toast("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const dataUrl = e.target.result;
+      try{
+        localStorage.setItem(HERO_IMG_KEY, dataUrl);
+      }catch(err){
+        console.error(err);
+        toast("이미지를 저장할 수 없습니다. (용량이 너무 클 수 있습니다)");
+        return;
+      }
+      input.value = "";
+      refreshHeroImageUI();
+      toast("메인 이미지가 저장되었습니다.");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearHeroImage(){
+    try{
+      localStorage.removeItem(HERO_IMG_KEY);
+    }catch(e){}
+    const input = document.getElementById("heroFile");
+    if(input) input.value = "";
+    refreshHeroImageUI();
+    toast("메인 이미지를 삭제했습니다.");
   }
 
   /***********************
@@ -883,9 +1009,11 @@
       toggleCallInputs();
       toggleSmsInputs();
       refreshSettingsUI();
+      refreshHeroImageUI(); // 관리자에서 미리보기 갱신
       window.scrollTo({top:0,behavior:"smooth"});
     }else{
       updateContactHint();
+      refreshHeroImageUI(); // 사용자 메인 이미지 갱신
     }
   }
   window.addEventListener("hashchange", renderRoute);
@@ -985,7 +1113,7 @@
       options:[
         {key:"unlimited", label:"무제한(조건없음)", color:"red"},
         {key:"basic", label:"기본제공(모바일 무제한 + 유료통화 제한)", color:"amber"},
-        {key:"direct", label:"직접입력(분)", color:"blue"},
+        {key:"direct", label:"제한적 통화시간플랜 ( 50분 , 100분등 플랜구조 )", color:"blue"}, // ★ 라벨만 변경
       ]
     },
     { id:"prefSmsType", title:"Q12. 원하는 문자 형식은?", type:"single",
@@ -994,7 +1122,7 @@
         {key:"basic", label:"기본제공(조건부)", color:"amber"},
       ]
     },
-    { id:"endNotice", title:"Q13. 약정이 종료되기 직전 어떤 안내(관리)를 받는 게 좋나요?", type:"single",
+    { id:"endNotice", title:"Q13. 약정이 종료되기 직전 어떤 안내(관리를 받는 게 좋나요?", type:"single",
       options:[
         {key:"sms", label:"알림문자", color:"blue"},
         {key:"smsPlusCall", label:"알림문자 + 약정종료에 대한 명확한 안내 연락(광고 아님)", color:"amber"},
@@ -1004,7 +1132,7 @@
   ];
 
   let step=0, answers={};
-  let LAST_RESULT = null; // 결과 공유용
+  let LAST_RESULT = null;
   const $ = (id)=>document.getElementById(id);
 
   function toast(msg){
@@ -1135,53 +1263,40 @@
   }
 
   function inferNeeds(){
-    // data base
     let needDataGB = dataStepToGB(answers.minData);
 
-    // Q3: outsideOften => Q2 그대로(추가 없음), unknown => +2
     if(answers.whereUse==="unknown") needDataGB += 2;
 
-    // Q4: 지도/내비는 "야외 사용" 성격이므로
-    // - Q3가 almostNone(집/와이파이 위주)일 때는 원래 가산(+2/+1/+0/+1) 그대로
-    // - Q3가 outsideOften일 때는 과도 점프 방지로 완화 적용
     const where = answers.whereUse || "unknown";
     const n = answers.navi || "unknown";
 
     if(where === "outsideOften"){
-      // 완화 버전
       if(n==="often") needDataGB += 1;
       else if(n==="sometimes") needDataGB += 0;
       else if(n==="unknown") needDataGB += 1;
     }else{
-      // 기본(원래 가산)
       if(n==="often") needDataGB += 2;
       else if(n==="sometimes") needDataGB += 1;
       else if(n==="unknown") needDataGB += 1;
     }
 
-    // call
     let needCallMin = callStepToMin(answers.minCall);
     const preferUnlimitedCall = (answers.minCall==="unlimitedPref");
 
-    // sms
     let needSms = smsStepToCount(answers.minSms);
     const preferUnlimitedSms = (answers.minSms==="unlimitedPref");
 
-    // public call risk (대표/유선/070)
     const publicCall = answers.publicCall || "unknown";
 
-    // protect: Q8 unknown or Q9 yes/unknown
     const protect = (answers.afterPref==="unknown") || (answers.overageExp==="yes" || answers.overageExp==="unknown");
 
-    // Q8 new meaning
     const wantsMeteredOk = (answers.afterPref==="useEvenIfCharged");
     const wantsSlowUnlimited = (answers.afterPref==="slowUnlimited");
     const wantsCut = (answers.afterPref==="cut");
 
-    // dislike flags used for safety scoring/avoid
-    const hateOverage = (!wantsMeteredOk) || protect; // 과금 허용을 고른 경우가 아니면 과금 싫음
-    const hateCut = (!wantsCut) || protect;           // 차단을 '원함'이 아니면 끊김 싫음
-    const okSlow = wantsSlowUnlimited;                // 느려져도 OK
+    const hateOverage = (!wantsMeteredOk) || protect;
+    const hateCut = (!wantsCut) || protect;
+    const okSlow = wantsSlowUnlimited;
 
     const budgetRanges = inferBudgetRanges();
 
@@ -1225,11 +1340,8 @@
     $("resultSummary").innerHTML = summary.replaceAll("\n","<br>");
 
     const avoid = [];
-    // Q8 기반: 과금 허용이 아니면 종량 피하기
     if(needs.hateOverage) avoid.push("종량 과금(데이터 초과 시 요금 증가)");
-    // 차단을 '원함'이 아니면 차단 피하기(보호 모드면 더 강하게)
     if(needs.hateCut) avoid.push("데이터 소진 시 완전 차단(연락/카톡 끊김)");
-    // 느린 무제한을 원하면, 속도제어 없는 구조/차단/종량이 불리
     if(needs.okSlow) avoid.push("소진 후 속도제어가 없는 구성(차단/종량)");
 
     if(needs.publicCall==="often") avoid.push("기본제공인데 유료통화 가능 시간이 너무 짧은 구성");
@@ -1363,7 +1475,6 @@
         sSafety*0.10 +
         sPrice*0.05;
 
-      // 보호 모드일 때 종량은 거의 탈락
       if(needs.protect && p.after==="metered"){
         return {...p, _fit:-1e9, _scoreData:sData, _scoreCall:sCall, _scoreSms:sSms, _scoreSafety:sSafety, _scorePrice:sPrice};
       }
@@ -1372,7 +1483,6 @@
 
     const picked = diversify(scored).slice(0, Math.min(maxN, scored.length));
 
-    // 예산 우대 정렬
     if(needs.budgetRanges && needs.budgetRanges.length){
       picked.sort((a,b)=>{
         const ain = inBudget(a, needs.budgetRanges) ? 1 : 0;
@@ -1508,15 +1618,12 @@
       else if(mbps>=1) s += 3;
       else if(mbps>=0.4) s += 1;
 
-      // Q8에서 느린 무제한 선호면 speed 구조에 약간 가산
       if(needs.okSlow) s += 2;
     }
     else if(p.after==="cut"){
-      // Q8에서 차단을 원하면 감점 줄임, 아니면 크게 감점
       s = needs.wantsCut ? 80 : (needs.hateCut || needs.protect ? 35 : 55);
     }
     else if(p.after==="metered"){
-      // Q8에서 과금 허용이면 과도 감점하지 않음
       if(needs.wantsMeteredOk) s = 70;
       else s = needs.hateOverage || needs.protect ? 10 : 35;
     }
@@ -1536,8 +1643,6 @@
 
   /***********************
    * 결과 공유(카톡)
-   * - 특정 1명에게 자동 전송은 불가(카카오 SDK/앱키/권한 필요)
-   * - 대신 "공유하기"로 카톡 선택하여 보내기 + 복사/링크 fallback
    ***********************/
   function composeShareText(){
     if(!LAST_RESULT) return "요금제 선택 체크 결과";
@@ -1571,17 +1676,14 @@
   async function shareResultToKakao(){
     const text = composeShareText();
 
-    // 1) Web Share(모바일) -> 카톡 선택 가능
     if(navigator.share){
       try{
         await navigator.share({ title: "요금제 선택 체크 결과", text });
         return;
       }catch(e){
-        // 사용자가 취소했을 수도 있음 -> fallback
       }
     }
 
-    // 2) fallback: 클립보드 복사 + 카톡상담 링크 열기
     try{
       await navigator.clipboard.writeText(text);
       toast("결과를 복사했어요. 카톡에서 붙여넣기 하세요.");
@@ -1589,7 +1691,6 @@
       toast("복사에 실패했어요. 아래 상담 버튼으로 이동 후 직접 공유해주세요.");
     }
 
-    // 카톡상담 링크가 있으면 열어주기(사용자 선택/붙여넣기용)
     if(SETTINGS.kakaoChatUrl){
       window.open(SETTINGS.kakaoChatUrl, "_blank", "noopener,noreferrer");
     }
@@ -2221,7 +2322,7 @@
     const u = (p.throttleUnit === "Kbps") ? "Kbps" : "Mbps";
     return `${v}${u}`;
   }
-   function fmtData(p){
+  function fmtData(p){
     const gb = parseNumberFlexible(p.dataGB);
     const desc = (p.dataDesc||"").trim();
     if(desc) return escapeHtml(desc);
@@ -2255,8 +2356,8 @@
   updateCodeHint();
   refreshSettingsUI();
   updateContactHint();
+  refreshHeroImageUI();
 </script>
 
 </body>
 </html>
-
