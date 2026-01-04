@@ -374,30 +374,30 @@
       .inline3{grid-template-columns:1fr 1fr}
     }
 
-  /* 메인 이미지 영역 */
-.heroInner{
-  padding:0;
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: calc(var(--r20) - 4px);
-}
+    /* 메인 이미지 영역 */
+    .heroInner{
+      padding:0;
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-radius: calc(var(--r20) - 4px);
+    }
 
-.heroImg{
-  display:block;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
+    .heroImg{
+      display:block;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
 
-.heroImgPreview{
-  display:block;
-  width:100%;
-  max-height:200px;
-  object-fit:cover;
-  border-radius:calc(var(--r20) - 4px);
-}
+    .heroImgPreview{
+      display:block;
+      width:100%;
+      max-height:200px;
+      object-fit:cover;
+      border-radius:calc(var(--r20) - 4px);
+    }
   </style>
 </head>
 <body>
@@ -498,9 +498,8 @@
       <div class="inner">
         <div class="title">관리자</div>
         <p class="p">
-          ✅ 요금제는 브라우저에 저장됩니다(localStorage).<br>
-          ✅ 엑셀(.xlsx)로 한 번에 업데이트/수정 가능합니다. (id가 같으면 덮어쓰기)<br>
-          ✅ 숫자칸은 <b>15GB / 400Kbps / 18,900원 / 30분</b>처럼 단위가 붙어도 자동 인식합니다.
+          ✅ 운영모드에서는 요금제/설정이 <b>GitHub의 data/*.json</b>에서 로드되며, 편집은 CMS 도입 후 가능하도록 잠깁니다.<br>
+          ✅ (개발용) localhost / ?dev=1 에서는 localStorage 편집/엑셀 업로드가 동작합니다.
         </p>
         <div class="divider"></div>
         <div class="row2">
@@ -519,7 +518,7 @@
     <div class="card">
       <div class="inner">
         <div class="title">연락/공유 설정</div>
-        <div class="p">결과 공유(카톡) 메시지에 들어갈 <b>상담 링크 / 문의전화 / 안내메모</b>를 설정합니다. (이 브라우저에 저장됨)</div>
+        <div class="p">결과 공유(카톡) 메시지에 들어갈 <b>상담 링크 / 문의전화 / 안내메모</b>를 설정합니다.</div>
         <div style="height:10px"></div>
 
         <div class="formGrid">
@@ -556,8 +555,8 @@
       <div class="inner">
         <div class="title">메인 이미지 업로드</div>
         <div class="p">
-          메인 페이지 상단에 표시될 이미지를 업로드합니다.<br>
-          (이 브라우저에 저장되며, 새로고침 후에도 유지됩니다.)
+          (개발용) 메인 페이지 상단에 표시될 이미지를 업로드합니다.<br>
+          운영모드에서는 assets/hero.jpg 고정이며, 변경은 Git/CMS로 관리합니다.
         </div>
         <div style="height:10px"></div>
 
@@ -771,9 +770,31 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
   /***********************
-   * SETTINGS (ADMIN EDITABLE)
+   * DATA SOURCE (REMOTE first)
    ***********************/
-  const SETTINGS_KEY = "planCheck_settings_v1";
+  const DATA_BASE = "/data";
+  const DEV_LOCAL_ADMIN =
+    (location.hostname === "localhost" || location.hostname === "127.0.0.1") ||
+    (new URLSearchParams(location.search).get("dev") === "1");
+
+  function canWriteLocalAdminData(){
+    return DEV_LOCAL_ADMIN;
+  }
+
+  async function fetchJSON(url, { bust = true } = {}){
+    const finalUrl = bust ? `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}` : url;
+    const res = await fetch(finalUrl, { cache: "no-store" });
+    if(!res.ok){
+      const text = await res.text().catch(()=> "");
+      throw new Error(`Fetch failed: ${res.status} ${res.statusText} - ${finalUrl}\n${text.slice(0, 300)}`);
+    }
+    return res.json();
+  }
+
+  /***********************
+   * SETTINGS (REMOTE)
+   ***********************/
+  const SETTINGS_KEY = "planCheck_settings_v1"; // (개발용 localStorage)
   const DEFAULT_SETTINGS = {
     kakaoChatUrl: "https://open.kakao.com/o/XXXXXXXX",
     reservationUrl: "https://forms.gle/XXXXXXXXXXXX",
@@ -781,10 +802,15 @@
     memo: ""
   };
 
-  /* 메인 이미지 저장 키 */
-  const HERO_IMG_KEY = "planCheck_hero_img_v1";
+  let SETTINGS = { ...DEFAULT_SETTINGS };
 
-  function loadSettings(){
+  async function loadSettingsRemote(){
+    const obj = await fetchJSON(`${DATA_BASE}/settings.json`);
+    SETTINGS = { ...DEFAULT_SETTINGS, ...(obj || {}) };
+    return SETTINGS;
+  }
+
+  function loadSettingsLocal(){
     try{
       const raw = localStorage.getItem(SETTINGS_KEY);
       if(!raw) return {...DEFAULT_SETTINGS};
@@ -794,10 +820,9 @@
       return {...DEFAULT_SETTINGS};
     }
   }
-  function writeSettings(s){
+  function writeSettingsLocal(s){
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
   }
-  let SETTINGS = loadSettings();
 
   function refreshSettingsUI(){
     const s = SETTINGS;
@@ -807,27 +832,36 @@
     if($id("sPhone")) $id("sPhone").value = s.phone || "";
     if($id("sMemo")) $id("sMemo").value = s.memo || "";
     if($id("settingsHint")) $id("settingsHint").textContent =
-      `현재 설정: 카톡링크 ${s.kakaoChatUrl ? "등록됨" : "미등록"} · 문의전화 ${s.phone ? "등록됨" : "미등록"} · 안내메모 ${s.memo ? "등록됨" : "미등록"}`;
+      `현재 설정(REMOTE): 카톡링크 ${s.kakaoChatUrl ? "등록됨" : "미등록"} · 문의전화 ${s.phone ? "등록됨" : "미등록"} · 안내메모 ${s.memo ? "등록됨" : "미등록"}`;
     updateContactHint();
   }
 
   function saveSettings(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 설정 저장이 비활성화되어 있어요. (CMS 도입 후 적용)");
+      return;
+    }
     const s = {
       kakaoChatUrl: (document.getElementById("sKakao").value || "").trim(),
       reservationUrl: (document.getElementById("sReserve").value || "").trim(),
       phone: (document.getElementById("sPhone").value || "").trim(),
       memo: (document.getElementById("sMemo").value || "").trim(),
     };
-    writeSettings(s);
-    SETTINGS = loadSettings();
+    writeSettingsLocal(s);
+    SETTINGS = loadSettingsLocal();
     refreshSettingsUI();
-    toast("설정 저장 완료");
+    toast("설정 저장 완료(개발용 localStorage)");
   }
+
   function resetSettings(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 설정 초기화가 비활성화되어 있어요.");
+      return;
+    }
     localStorage.removeItem(SETTINGS_KEY);
-    SETTINGS = loadSettings();
+    SETTINGS = loadSettingsLocal();
     refreshSettingsUI();
-    toast("설정 초기화");
+    toast("설정 초기화(개발용)");
   }
 
   function updateContactHint(){
@@ -844,54 +878,54 @@
   }
 
   /***********************
-   * 메인 이미지(히어로 이미지) 관리
+   * HERO IMAGE (운영: assets/hero.jpg 고정)
    ***********************/
+  const HERO_IMG_KEY = "planCheck_hero_img_v1";
+
   function loadHeroImage(){
-    try{
-      return localStorage.getItem(HERO_IMG_KEY) || "";
-    }catch(e){
-      return "";
-    }
+    try{ return localStorage.getItem(HERO_IMG_KEY) || ""; }
+    catch(e){ return ""; }
   }
 
   function refreshHeroImageUI(){
-    const dataUrl = loadHeroImage();
     const heroCard = document.getElementById("heroCard");
     const heroImg  = document.getElementById("heroImg");
     const preview  = document.getElementById("heroPreview");
 
-    if(heroCard && heroImg){
-      if(dataUrl){
-        heroImg.src = dataUrl;
-        heroCard.style.display = "block";
-      }else{
-        heroImg.removeAttribute("src");
-        heroCard.style.display = "none";
+    // 운영: 고정
+    if(!canWriteLocalAdminData()){
+      if(heroImg) heroImg.src = "assets/hero.jpg";
+      if(heroCard) heroCard.style.display = "block";
+      if(preview){
+        preview.src = "assets/hero.jpg";
+        preview.style.display = "block";
       }
+      return;
+    }
+
+    // 개발: localStorage 우선, 없으면 기본 이미지
+    const dataUrl = loadHeroImage();
+    if(heroCard && heroImg){
+      heroImg.src = dataUrl || "assets/hero.jpg";
+      heroCard.style.display = "block";
     }
     if(preview){
-      if(dataUrl){
-        preview.src = dataUrl;
-        preview.style.display = "block";
-      }else{
-        preview.removeAttribute("src");
-        preview.style.display = "none";
-      }
+      preview.src = dataUrl || "assets/hero.jpg";
+      preview.style.display = "block";
     }
   }
 
   function saveHeroImage(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 이미지 저장이 비활성화되어 있어요. (Git/CMS로 관리)");
+      return;
+    }
     const input = document.getElementById("heroFile");
     if(!input){ toast("이미지 입력 요소를 찾을 수 없습니다."); return; }
     const file = (input.files || [])[0];
-    if(!file){
-      toast("이미지 파일을 선택하세요.");
-      return;
-    }
-    if(!file.type || !file.type.startsWith("image/")){
-      toast("이미지 파일만 업로드 가능합니다.");
-      return;
-    }
+    if(!file){ toast("이미지 파일을 선택하세요."); return; }
+    if(!file.type || !file.type.startsWith("image/")){ toast("이미지 파일만 업로드 가능합니다."); return; }
+
     const reader = new FileReader();
     reader.onload = function(e){
       const dataUrl = e.target.result;
@@ -904,19 +938,21 @@
       }
       input.value = "";
       refreshHeroImageUI();
-      toast("메인 이미지가 저장되었습니다.");
+      toast("메인 이미지가 저장되었습니다.(개발용)");
     };
     reader.readAsDataURL(file);
   }
 
   function clearHeroImage(){
-    try{
-      localStorage.removeItem(HERO_IMG_KEY);
-    }catch(e){}
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 이미지 삭제가 비활성화되어 있어요.");
+      return;
+    }
+    try{ localStorage.removeItem(HERO_IMG_KEY); }catch(e){}
     const input = document.getElementById("heroFile");
     if(input) input.value = "";
     refreshHeroImageUI();
-    toast("메인 이미지를 삭제했습니다.");
+    toast("메인 이미지를 삭제했습니다.(개발용)");
   }
 
   /***********************
@@ -1010,12 +1046,61 @@
   }
 
   /***********************
+   * PLANS (REMOTE)
+   ***********************/
+  const LS_KEY = "planCheck_plans_v9"; // (개발용 localStorage)
+  let editingId = null;
+
+  let PLANS_REMOTE = [];
+
+  async function loadPlansRemote(){
+    const raw = await fetchJSON(`${DATA_BASE}/plans.json`);
+    const arr = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.plans) ? raw.plans : []);
+    PLANS_REMOTE = arr.map(migrateLegacyPlan);
+    return PLANS_REMOTE;
+  }
+
+  function getPlans(){
+    return Array.isArray(PLANS_REMOTE) ? PLANS_REMOTE : [];
+  }
+
+  function loadPlansLocal(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.map(migrateLegacyPlan) : [];
+    }catch(e){ return []; }
+  }
+  function savePlansLocal(plans){
+    localStorage.setItem(LS_KEY, JSON.stringify(plans));
+  }
+
+  /***********************
    * Route
    ***********************/
+  function setAdminReadOnlyUI(){
+    if(location.hash !== "#admin") return;
+    if(canWriteLocalAdminData()) return;
+
+    // 운영에서 입력 폼을 읽기전용 느낌으로
+    ["sKakao","sReserve","sPhone","sMemo",
+     "fPriceRegular","fPriceDiscount","fCompetitorPrice","fCallPaidMin","fCallMin","fSmsCondition",
+     "fDataGB","fThrottleVal","fDataDesc","fMemo","heroFile"
+    ].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.setAttribute("disabled","disabled");
+    });
+    ["fCallType","fSmsType","fThrottleUnit","fAfter"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.setAttribute("disabled","disabled");
+    });
+  }
+
   function renderRoute(){
     const isAdmin = location.hash === "#admin";
     document.getElementById("userPage").classList.toggle("hidden", isAdmin);
     document.getElementById("adminPage").classList.toggle("hidden", !isAdmin);
+
     if(isAdmin){
       renderAdminList();
       updateCalcHint();
@@ -1023,11 +1108,12 @@
       toggleCallInputs();
       toggleSmsInputs();
       refreshSettingsUI();
-      refreshHeroImageUI(); // 관리자에서 미리보기 갱신
+      refreshHeroImageUI();
+      setAdminReadOnlyUI();
       window.scrollTo({top:0,behavior:"smooth"});
     }else{
       updateContactHint();
-      refreshHeroImageUI(); // 사용자 메인 이미지 갱신
+      refreshHeroImageUI();
     }
   }
   window.addEventListener("hashchange", renderRoute);
@@ -1127,7 +1213,7 @@
       options:[
         {key:"unlimited", label:"무제한(조건없음)", color:"red"},
         {key:"basic", label:"기본제공(모바일 무제한 + 유료통화 제한)", color:"amber"},
-        {key:"direct", label:"제한적 통화시간플랜 ( 50분 , 100분등 플랜구조 )", color:"blue"}, // ★ 라벨만 변경
+        {key:"direct", label:"제한적 통화시간플랜 ( 50분 , 100분등 플랜구조 )", color:"blue"},
       ]
     },
     { id:"prefSmsType", title:"Q12. 원하는 문자 형식은?", type:"single",
@@ -1158,25 +1244,26 @@
   }
 
   function start(){
-  document.getElementById("heroCard").classList.add("hidden"); // ✅ 추가
+    document.getElementById("heroCard").classList.add("hidden");
+    $("stepIntro").classList.add("hidden");
+    $("stepQuiz").classList.remove("hidden");
+    $("stepResult").classList.add("hidden");
+    step=0; answers={};
+    LAST_RESULT = null;
+    renderQ();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
 
-  $("stepIntro").classList.add("hidden");
-  $("stepQuiz").classList.remove("hidden");
-  $("stepResult").classList.add("hidden");
-
-  step=0; answers={};
-  LAST_RESULT = null;
-  renderQ();
-  window.scrollTo({top:0,behavior:"smooth"});
-}
   function restartTest(){
     $("stepResult").classList.add("hidden");
     $("stepIntro").classList.remove("hidden");
     $("stepQuiz").classList.add("hidden");
     step=0; answers={};
     LAST_RESULT = null;
+    document.getElementById("heroCard").classList.remove("hidden"); // ✅ 다시 시작 시 히어로 복구
     window.scrollTo({top:0,behavior:"smooth"});
   }
+
   function prev(){ if(step<=0) return; step--; renderQ(); }
   function next(){
     if(!isAnswered(quiz[step])) return;
@@ -1372,13 +1459,13 @@
       avoidBox.appendChild(s);
     });
 
-    const plans = loadPlans().map(migrateLegacyPlan);
+    const plans = getPlans(); // ✅ REMOTE 고정
     const picked = pickPlans(plans, needs, 4);
 
     const planBox = $("planBox");
     planBox.innerHTML = "";
     if(!picked.length){
-      planBox.innerHTML = `<div class="plan"><h4>등록된 요금제가 없습니다</h4><p>reserved → 코드 입력 후 관리자에서 요금제를 등록해주세요.</p></div>`;
+      planBox.innerHTML = `<div class="plan"><h4>등록된 요금제가 없습니다</h4><p>운영 데이터(data/plans.json)에 요금제가 필요합니다.</p></div>`;
       LAST_RESULT = { needs, picked: [] };
       return;
     }
@@ -1697,8 +1784,7 @@
       try{
         await navigator.share({ title: "요금제 선택 체크 결과", text });
         return;
-      }catch(e){
-      }
+      }catch(e){}
     }
 
     try{
@@ -1713,25 +1799,22 @@
     }
   }
 
+  <!-- PART 1 END -->
   /***********************
-   * ADMIN DB
+   * ADMIN DB (개발용 localStorage 편집)
    ***********************/
-  const LS_KEY = "planCheck_plans_v9";
-  let editingId=null;
-
-  function loadPlans(){
-    try{
-      const raw = localStorage.getItem(LS_KEY);
-      const arr = raw ? JSON.parse(raw) : [];
-      return Array.isArray(arr) ? arr : [];
-    }catch(e){ return []; }
-  }
-  function savePlans(plans){ localStorage.setItem(LS_KEY, JSON.stringify(plans)); }
-
   function toggleCallInputs(){
     const t = document.getElementById("fCallType").value;
     const paid = document.getElementById("fCallPaidMin");
     const direct = document.getElementById("fCallMin");
+    if(!paid || !direct) return;
+
+    if(!canWriteLocalAdminData()){
+      paid.disabled = true;
+      direct.disabled = true;
+      return;
+    }
+
     paid.disabled = (t !== "basic");
     direct.disabled = (t !== "direct");
     if(t !== "basic") paid.value = "";
@@ -1741,6 +1824,13 @@
   function toggleSmsInputs(){
     const t = document.getElementById("fSmsType").value;
     const cond = document.getElementById("fSmsCondition");
+    if(!cond) return;
+
+    if(!canWriteLocalAdminData()){
+      cond.disabled = true;
+      return;
+    }
+
     cond.disabled = (t !== "basic");
     if(t !== "basic") cond.value = "";
   }
@@ -1776,6 +1866,11 @@
   }
 
   function savePlan(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 편집이 비활성화되어 있어요. (CMS 도입 후 편집 가능)");
+      return;
+    }
+
     const carrierType = "알뜰폰";
 
     const priceRegular = $("fPriceRegular").value ? parseNumberFlexible($("fPriceRegular").value) : null;
@@ -1805,7 +1900,7 @@
     if(callType==="direct" && !callMin){ toast("통화가 ‘직접입력’이면 통화(분)을 입력하세요."); return; }
     if(smsType==="basic" && !smsCondition){ toast("문자가 ‘기본제공(조건부무제한)’이면 조건을 글로 입력하세요."); return; }
 
-    const plans = loadPlans();
+    const plans = loadPlansLocal();
     const plan = {
       id: editingId || cryptoId(),
       carrierType,
@@ -1832,14 +1927,18 @@
       plans.unshift(plan);
     }
 
-    savePlans(plans);
+    savePlansLocal(plans);
     resetForm();
     renderAdminList();
-    toast("저장 완료");
+    toast("저장 완료(개발용)");
   }
 
   function editPlan(id){
-    const p0 = loadPlans().find(x=>x.id===id);
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 수정이 비활성화되어 있어요.");
+      return;
+    }
+    const p0 = loadPlansLocal().find(x=>x.id===id);
     if(!p0) return;
     const p = migrateLegacyPlan(p0);
 
@@ -1889,21 +1988,25 @@
   }
 
   function deletePlan(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 삭제가 비활성화되어 있어요.");
+      return;
+    }
     if(!editingId) return;
-    const plans = loadPlans().filter(p=>p.id!==editingId);
-    savePlans(plans);
+    const plans = loadPlansLocal().filter(p=>p.id!==editingId);
+    savePlansLocal(plans);
     resetForm();
     renderAdminList();
-    toast("삭제 완료");
+    toast("삭제 완료(개발용)");
   }
 
   function renderAdminList(){
-    const plans = loadPlans().map(migrateLegacyPlan);
+    const plans = canWriteLocalAdminData() ? loadPlansLocal() : getPlans();
     const box = $("planList");
     box.innerHTML="";
 
     if(plans.length===0){
-      box.innerHTML = `<div class="item"><div class="itemName">등록된 요금제가 없습니다</div><div class="itemMeta">요금제를 추가하거나 엑셀로 업로드하세요.</div></div>`;
+      box.innerHTML = `<div class="item"><div class="itemName">등록된 요금제가 없습니다</div><div class="itemMeta">${canWriteLocalAdminData() ? "요금제를 추가하거나 엑셀로 업로드하세요." : "운영 데이터(data/plans.json)에 요금제를 추가하세요."}</div></div>`;
       return;
     }
 
@@ -1939,7 +2042,10 @@
             <div class="tiny" style="margin-top:6px;">id: ${escapeHtml(p.id)}</div>
           </div>
           <div class="row2">
-            <button class="smallBtn primary" type="button" onclick="editPlan('${p.id}')">수정</button>
+            ${canWriteLocalAdminData()
+              ? `<button class="smallBtn primary" type="button" onclick="editPlan('${p.id}')">수정</button>`
+              : `<span class="badge">운영: 읽기 전용</span>`
+            }
           </div>
         </div>
         ${p.memo ? `<div class="tiny" style="margin-top:10px;">메모: ${escapeHtml(p.memo)}</div>` : ``}
@@ -1949,9 +2055,9 @@
   }
 
   function updateCalcHint(){
-    const reg = $("fPriceRegular").value ? parseNumberFlexible($("fPriceRegular").value) : 0;
-    const dis = $("fPriceDiscount").value ? parseNumberFlexible($("fPriceDiscount").value) : 0;
-    const c = $("fCompetitorPrice").value ? parseNumberFlexible($("fCompetitorPrice").value) : 0;
+    const reg = $("fPriceRegular")?.value ? parseNumberFlexible($("fPriceRegular").value) : 0;
+    const dis = $("fPriceDiscount")?.value ? parseNumberFlexible($("fPriceDiscount").value) : 0;
+    const c = $("fCompetitorPrice")?.value ? parseNumberFlexible($("fCompetitorPrice").value) : 0;
 
     const diff = (reg && dis && reg > dis) ? (reg - dis) : 0;
     const pct = calcSavePercent(dis, c);
@@ -1963,14 +2069,16 @@
     }else{
       if(pct!==null) txt = `타사 대비 약 ${pct}% 저렴`;
     }
-    $("calcHint").textContent = txt;
+    const el = $("calcHint");
+    if(el) el.textContent = txt;
   }
+
   ["fPriceRegular","fPriceDiscount","fCompetitorPrice"].forEach(id=>{
     document.addEventListener("input",(e)=>{ if(e.target && e.target.id===id) updateCalcHint(); });
   });
 
   /***********************
-   * Excel
+   * Excel (개발용)
    ***********************/
   const EXCEL_HEADERS = [
     "id(선택)",
@@ -1978,18 +2086,14 @@
     "정가(원)",
     "할인가(원)*",
     "타사 유사요금(원)",
-
     "음성통화시간 유형(unlimited|basic|direct)",
     "유료통화 가능(분:basic일 때)",
     "직접입력 통화(분:direct일 때)",
-
     "문자 유형(unlimited|basic)",
     "문자 조건(글:basic일 때)",
-
     "데이터(GB)*",
     "데이터 소진 후 속도값",
     "속도 단위(Mbps|Kbps)",
-
     "데이터 소진 후 구조(speed|cut|metered)",
     "표시용 설명(옵션)",
     "메모(옵션)"
@@ -2005,18 +2109,14 @@
         "정가(원)": "22,000원",
         "할인가(원)*": "18,900원",
         "타사 유사요금(원)": "22,000원",
-
         "음성통화시간 유형(unlimited|basic|direct)": "basic",
         "유료통화 가능(분:basic일 때)": "60분",
         "직접입력 통화(분:direct일 때)": "",
-
         "문자 유형(unlimited|basic)": "basic",
         "문자 조건(글:basic일 때)": "SMS 무제한, MMS 월 100건",
-
         "데이터(GB)*": "15GB",
         "데이터 소진 후 속도값": "1Mbps",
         "속도 단위(Mbps|Kbps)": "Mbps",
-
         "데이터 소진 후 구조(speed|cut|metered)": "speed",
         "표시용 설명(옵션)": "15GB + 1Mbps",
         "메모(옵션)": "대표번호/유선 통화가 있으면 유료통화 가능(분)이 중요"
@@ -2032,11 +2132,19 @@
   }
 
   function triggerExcel(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 엑셀 업로드가 비활성화되어 있어요. (CMS 도입 후)");
+      return;
+    }
     if(!window.XLSX){ toast("엑셀 기능 로딩 실패(네트워크 확인)"); return; }
     $("excelInput").click();
   }
 
   $("excelInput").addEventListener("change", async (e)=>{
+    if(!canWriteLocalAdminData()){
+      e.target.value = "";
+      return;
+    }
     const file = e.target.files && e.target.files[0];
     if(!file) return;
 
@@ -2048,7 +2156,7 @@
       const json = XLSX.utils.sheet_to_json(ws, {defval:""});
       if(!json.length){ toast("엑셀에 데이터가 없습니다"); return; }
 
-      const existing = loadPlans().map(migrateLegacyPlan);
+      const existing = loadPlansLocal().map(migrateLegacyPlan);
       const map = new Map(existing.map(p=>[p.id, p ]));
 
       let upserted = 0;
@@ -2083,18 +2191,14 @@
           priceRegular: r.priceRegular!=="" && r.priceRegular!=null ? parseNumberFlexible(r.priceRegular) : null,
           priceDiscount,
           competitorPrice: r.competitorPrice!=="" && r.competitorPrice!=null ? parseNumberFlexible(r.competitorPrice) : null,
-
           callType,
           callPaidMin,
           callMin,
-
           smsType,
           smsCondition,
-
           dataGB,
           throttleVal: speedParsed.val,
           throttleUnit: speedParsed.unit,
-
           after: normalizeEnum(r.after, "speed", ["speed","cut","metered"]),
           dataDesc: String(r.dataDesc || "").trim(),
           memo: String(r.memo || "").trim()
@@ -2104,7 +2208,7 @@
         upserted++;
       }
 
-      savePlans(Array.from(map.values()));
+      savePlansLocal(Array.from(map.values()));
       renderAdminList();
       toast(`업로드 완료: ${upserted}건 반영, ${skipped}건 건너뜀`);
     }catch(err){
@@ -2116,8 +2220,12 @@
   });
 
   function exportExcel(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 내보내기가 비활성화되어 있어요.");
+      return;
+    }
     if(!window.XLSX){ toast("엑셀 기능 로딩 실패(네트워크 확인)"); return; }
-    const plans = loadPlans().map(migrateLegacyPlan);
+    const plans = loadPlansLocal().map(migrateLegacyPlan);
     if(!plans.length){ toast("내보낼 요금제가 없습니다"); return; }
 
     const rows = plans.map(p=>({
@@ -2126,18 +2234,14 @@
       "정가(원)": p.priceRegular ?? "",
       "할인가(원)*": p.priceDiscount ?? "",
       "타사 유사요금(원)": p.competitorPrice ?? "",
-
       "음성통화시간 유형(unlimited|basic|direct)": p.callType ?? "unlimited",
       "유료통화 가능(분:basic일 때)": (p.callType==="basic") ? (p.callPaidMin ?? "") : "",
       "직접입력 통화(분:direct일 때)": (p.callType==="direct") ? (p.callMin ?? "") : "",
-
       "문자 유형(unlimited|basic)": p.smsType ?? "unlimited",
       "문자 조건(글:basic일 때)": (p.smsType==="basic") ? (p.smsCondition ?? "") : "",
-
       "데이터(GB)*": p.dataGB ?? "",
       "데이터 소진 후 속도값": p.throttleVal ?? "",
       "속도 단위(Mbps|Kbps)": p.throttleUnit ?? "Mbps",
-
       "데이터 소진 후 구조(speed|cut|metered)": p.after ?? "speed",
       "표시용 설명(옵션)": p.dataDesc ?? "",
       "메모(옵션)": p.memo ?? ""
@@ -2163,22 +2267,17 @@
       const lower = key.toLowerCase();
 
       if(key.startsWith("id")) out.id = v;
-
       else if(key.includes("정가")) out.priceRegular = v;
       else if(key.includes("할인가")) out.priceDiscount = v;
       else if(key.includes("타사 유사요금")) out.competitorPrice = v;
-
       else if(key.includes("음성통화시간 유형")) out.callType = v;
       else if(key.includes("유료통화 가능")) out.callPaidMin = v;
       else if(key.includes("직접입력 통화")) out.callMin = v;
-
       else if(key.includes("문자 유형")) out.smsType = v;
       else if(key.includes("문자 조건")) out.smsCondition = v;
-
       else if(key.startsWith("데이터(GB)")) out.dataGB = v;
       else if(key.includes("데이터 소진 후 속도값")) out.throttleVal = v;
       else if(key.includes("속도 단위")) out.throttleUnit = v;
-
       else if(key.includes("데이터 소진 후 구조")) out.after = v;
       else if(key.includes("표시용 설명")) out.dataDesc = v;
       else if(key.includes("메모")) out.memo = v;
@@ -2196,9 +2295,13 @@
   }
 
   /***********************
-   * Demo seed
+   * Demo seed (개발용)
    ***********************/
   function seedDemo(){
+    if(!canWriteLocalAdminData()){
+      toast("운영 모드에서는 데모 저장이 비활성화되어 있어요.");
+      return;
+    }
     const demo = [
       {
         id: cryptoId(),
@@ -2235,47 +2338,11 @@
         after:"speed",
         dataDesc:"15GB + 1Mbps",
         memo:"대표번호/유선 통화 있으면 유료통화분 중요"
-      },
-      {
-        id: cryptoId(),
-        carrierType:"알뜰폰",
-        priceRegular:17000,
-        priceDiscount:13900,
-        competitorPrice:17000,
-        callType:"direct",
-        callPaidMin:0,
-        callMin:200,
-        smsType:"unlimited",
-        smsCondition:"",
-        dataGB:6,
-        throttleVal:400,
-        throttleUnit:"Kbps",
-        after:"speed",
-        dataDesc:"6GB + 400Kbps",
-        memo:"통화 직접입력 예시"
-      },
-      {
-        id: cryptoId(),
-        carrierType:"알뜰폰",
-        priceRegular:9900,
-        priceDiscount:8900,
-        competitorPrice:35000,
-        callType:"unlimited",
-        callPaidMin:0,
-        callMin:0,
-        smsType:"unlimited",
-        smsCondition:"",
-        dataGB:4,
-        throttleVal:400,
-        throttleUnit:"Kbps",
-        after:"speed",
-        dataDesc:"4GB + 400Kbps",
-        memo:"데모4"
       }
     ];
-    savePlans(demo);
+    savePlansLocal(demo);
     renderAdminList();
-    toast("데모 저장 완료");
+    toast("데모 저장 완료(개발용)");
   }
 
   /***********************
@@ -2365,15 +2432,28 @@
   }
 
   /***********************
-   * INIT
+   * INIT (REMOTE 로드 후 시작)
    ***********************/
-  renderRoute();
-  resetForm();
-  updateCalcHint();
-  updateCodeHint();
-  refreshSettingsUI();
-  updateContactHint();
-  refreshHeroImageUI();
+  async function bootstrap(){
+    try{
+      await Promise.all([loadSettingsRemote(), loadPlansRemote()]);
+      renderRoute();
+      resetForm();
+      updateCalcHint();
+      updateCodeHint();
+      refreshSettingsUI();
+      updateContactHint();
+      refreshHeroImageUI();
+    }catch(err){
+      console.error(err);
+      toast("데이터 로딩 실패. 새로고침 후에도 동일하면 운영자에게 문의해주세요.");
+      renderRoute();
+      refreshHeroImageUI();
+      updateContactHint();
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", bootstrap);
 </script>
 
 </body>
