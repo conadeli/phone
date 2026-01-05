@@ -21,62 +21,63 @@ collections:
           - { label: "문의전화", name: "phone", widget: "string", required: false }
           - { label: "안내 메모", name: "memo", widget: "string", required: false }
 
-  - name: "plans"
+    - name: "plans"
     label: "요금제(plans.json)"
-    label_singular: "요금제"
-    folder: "data"
-    file: "data/plans.json"
-    format: "json"
-    create: false
-    delete: false
-    editor:
-      preview: false
-    fields:
-      - label: "요금제 목록"
-        name: "plans"
-        widget: "list"
+    files:
+      - name: "plans"
+        label: "요금제 목록"
+        file: "data/plans.json"
+        format: "json"
+        editor:
+          preview: false
         fields:
-          - { label: "id", name: "id", widget: "string" }
-          - { label: "통신사 유형", name: "carrierType", widget: "string", default: "알뜰폰" }
+          - label: "요금제 목록"
+            name: "plans"
+            widget: "list"
+            summary: "{{fields.id}} · {{fields.priceDiscount}}원 · {{fields.dataGB}}GB"
+            fields:
+              - { label: "id", name: "id", widget: "string" }
+              - { label: "통신사 유형", name: "carrierType", widget: "string", default: "알뜰폰" }
 
-          - { label: "정가(원)", name: "priceRegular", widget: "number", required: false, value_type: "int", min: 0 }
-          - { label: "할인가(원)", name: "priceDiscount", widget: "number", value_type: "int", min: 0 }
-          - { label: "타사 유사요금(원)", name: "competitorPrice", widget: "number", required: false, value_type: "int", min: 0 }
+              - { label: "정가(원)", name: "priceRegular", widget: "number", required: false, value_type: "int", min: 0 }
+              - { label: "할인가(원)", name: "priceDiscount", widget: "number", value_type: "int", min: 0 }
+              - { label: "타사 유사요금(원)", name: "competitorPrice", widget: "number", required: false, value_type: "int", min: 0 }
 
-          - label: "통화 타입"
-            name: "callType"
-            widget: "select"
-            options:
-              - { label: "무제한", value: "unlimited" }
-              - { label: "기본제공", value: "basic" }
-              - { label: "직접입력", value: "direct" }
-          - { label: "유료통화 가능(분, basic일 때)", name: "callPaidMin", widget: "number", required: false, value_type: "int", min: 0 }
-          - { label: "직접입력 통화(분, direct일 때)", name: "callMin", widget: "number", required: false, value_type: "int", min: 0 }
+              - label: "통화 타입"
+                name: "callType"
+                widget: "select"
+                options:
+                  - { label: "무제한", value: "unlimited" }
+                  - { label: "기본제공", value: "basic" }
+                  - { label: "직접입력", value: "direct" }
+              - { label: "유료통화 가능(분, basic일 때)", name: "callPaidMin", widget: "number", required: false, value_type: "int", min: 0 }
+              - { label: "직접입력 통화(분, direct일 때)", name: "callMin", widget: "number", required: false, value_type: "int", min: 0 }
 
-          - label: "문자 타입"
-            name: "smsType"
-            widget: "select"
-            options:
-              - { label: "무제한", value: "unlimited" }
-              - { label: "기본제공(조건부)", value: "basic" }
-          - { label: "문자 조건( basic일 때 )", name: "smsCondition", widget: "string", required: false }
+              - label: "문자 타입"
+                name: "smsType"
+                widget: "select"
+                options:
+                  - { label: "무제한", value: "unlimited" }
+                  - { label: "기본제공(조건부)", value: "basic" }
+              - { label: "문자 조건( basic일 때 )", name: "smsCondition", widget: "string", required: false }
 
-          - { label: "데이터(GB)", name: "dataGB", widget: "number", value_type: "int", min: 0 }
-          - { label: "소진 후 속도값", name: "throttleVal", widget: "number", required: false, min: 0 }
-          - label: "속도 단위"
-            name: "throttleUnit"
-            widget: "select"
-            options:
-              - { label: "Mbps", value: "Mbps" }
-              - { label: "Kbps", value: "Kbps" }
+              - { label: "데이터(GB)", name: "dataGB", widget: "number", value_type: "int", min: 0 }
+              - { label: "소진 후 속도값", name: "throttleVal", widget: "number", required: false, min: 0 }
+              - label: "속도 단위"
+                name: "throttleUnit"
+                widget: "select"
+                options:
+                  - { label: "Mbps", value: "Mbps" }
+                  - { label: "Kbps", value: "Kbps" }
 
-          - label: "소진 후 구조"
-            name: "after"
-            widget: "select"
-            options:
-              - { label: "속도제어(추가요금 없음)", value: "speed" }
-              - { label: "차단", value: "cut" }
-              - { label: "종량과금", value: "metered" }
+              - label: "소진 후 구조"
+                name: "after"
+                widget: "select"
+                options:
+                  - { label: "속도제어(추가요금 없음)", value: "speed" }
+                  - { label: "차단", value: "cut" }
+                  - { label: "종량과금", value: "metered" }
 
-          - { label: "표시용 설명", name: "dataDesc", widget: "string", required: false }
-          - { label: "메모", name: "memo", widget: "text", required: false }
+              - { label: "표시용 설명", name: "dataDesc", widget: "string", required: false }
+              - { label: "메모", name: "memo", widget: "text", required: false }
+
