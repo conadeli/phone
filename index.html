@@ -2454,6 +2454,42 @@
   }
 
   document.addEventListener("DOMContentLoaded", bootstrap);
+  document.addEventListener("DOMContentLoaded", bootstrap);
+
+  /* ============================
+   * Netlify Identity invite / recovery 처리
+   * ============================ */
+  (function () {
+    // identity 위젯 로드
+    if (!window.netlifyIdentity) {
+      const s = document.createElement("script");
+      s.src = "https://identity.netlify.com/v1/netlify-identity-widget.js";
+      s.onload = handleIdentity;
+      document.body.appendChild(s);
+    } else {
+      handleIdentity();
+    }
+
+    function handleIdentity() {
+      const hash = window.location.hash || "";
+      const hasToken =
+        hash.includes("invite_token=") ||
+        hash.includes("recovery_token=");
+
+      const isAdmin = window.location.pathname.startsWith("/admin");
+
+      // 토큰이 있는데 루트(/)라면 → /admin 으로 넘김
+      if (hasToken && !isAdmin) {
+        window.location.replace("/admin/" + hash);
+        return;
+      }
+
+      // 그냥 초기화
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.init();
+      }
+    }
+  })();
 </script>
 
 </body>
